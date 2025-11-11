@@ -6,7 +6,6 @@ import javafx.stage.Stage;
 public class Main extends Application {
     @Override
     public void start(Stage stage) {
-        SwitchModel model = new SwitchModel();
         SwitchController switchController = new SwitchController();
 
         Scene scene = new Scene(switchController.getView(), 800, 600);

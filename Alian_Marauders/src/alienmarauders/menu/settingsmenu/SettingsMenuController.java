@@ -4,22 +4,16 @@ import alienmarauders.SwitchModel;
 import javafx.scene.layout.Region;
 
 public class SettingsMenuController {
+    private final SettingsMenuModel model = new SettingsMenuModel();
+    private final SwitchModel switchModel;
+    private final SettingsMenuViewBuilder view;
 
-    private SettingsMenuModel model;
-    private SwitchModel switchModel;
-    private SettingsMenuViewBuilder view;
-
-    public SettingsMenuController(SwitchModel switchModel
-
-    ) {
-        this.model = new SettingsMenuModel();
+    public SettingsMenuController(SwitchModel switchModel) {
         this.switchModel = switchModel;
-        this.view = new SettingsMenuViewBuilder(model, 
-            () -> onStartGame()
-        );
+        this.view = new SettingsMenuViewBuilder(model, switchModel, this::onBackToMain);
     }
 
-    private void onStartGame() {
+    private void onBackToMain() {
         switchModel.settingsMenuActive.set(false);
         switchModel.mainMenuActive.set(true);
     }
@@ -27,5 +21,4 @@ public class SettingsMenuController {
     public Region getView() {
         return view.build();
     }
-    
 }

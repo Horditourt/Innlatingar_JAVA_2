@@ -31,10 +31,10 @@ public class SwitchViewBuilder {
         chatMenuView.visibleProperty().bind(model.chatMenuActive);
         gameView.visibleProperty().bind(model.gameActive);
 
-        /* mainMenuView.managedProperty().bind(mainMenuView.visibleProperty());
+        mainMenuView.managedProperty().bind(mainMenuView.visibleProperty());
         settingsMenuView.managedProperty().bind(settingsMenuView.visibleProperty());
         chatMenuView.managedProperty().bind(chatMenuView.visibleProperty());
-        gameView.managedProperty().bind(gameView.visibleProperty()); */
+        gameView.managedProperty().bind(gameView.visibleProperty());
 
         stackPane.getChildren().addAll(mainMenuView, settingsMenuView, chatMenuView, gameView);
         return stackPane;

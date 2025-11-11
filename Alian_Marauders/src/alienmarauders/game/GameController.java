@@ -1,21 +1,17 @@
+// src/alienmarauders/game/GameController.java
 package alienmarauders.game;
 
 import alienmarauders.SwitchModel;
 import javafx.scene.layout.Region;
 
 public class GameController {
-
-    private GameModel model;
-    private SwitchModel switchModel;
-    private GameViewBuilder view;
+    private final GameModel model = new GameModel();
+    private final SwitchModel switchModel;
+    private final GameViewBuilder view;
 
     public GameController(SwitchModel switchModel) {
-        this.model = new GameModel();
         this.switchModel = switchModel;
-        this.view = new GameViewBuilder(model,
-            // e.g. back to main from game
-            () -> onBackToMain()
-        );
+        this.view = new GameViewBuilder(model, this::onBackToMain).withSwitchModel(switchModel);
     }
 
     private void onBackToMain() {
@@ -23,7 +19,5 @@ public class GameController {
         switchModel.mainMenuActive.set(true);
     }
 
-    public Region getView() {
-        return view.build();
-    }
+    public Region getView() { return view.build(); }
 }

@@ -1,48 +1,53 @@
+// src/alienmarauders/menu/settingsmenu/SettingsMenuViewBuilder.java
 package alienmarauders.menu.settingsmenu;
 
+import alienmarauders.SwitchModel;
+import alienmarauders.Styles;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Region;
 
 public class SettingsMenuViewBuilder {
-    private SettingsMenuModel model;
-    private Runnable goMain;
+    private final SettingsMenuModel model;
+    private final Runnable goMain;
+    private final SwitchModel switchModel;
 
     private final VBox root = new VBox(10);
-    private ComboBox<String> bgOptions;
-    private ComboBox<String> difficultyOptions;
+    private final ComboBox<String> bgOptions = new ComboBox<>();
+    private final ComboBox<String> difficultyOptions = new ComboBox<>();
 
-    public SettingsMenuViewBuilder(SettingsMenuModel model, Runnable goMain) {
+    public SettingsMenuViewBuilder(SettingsMenuModel model, SwitchModel switchModel, Runnable goMain) {
         this.model = model;
+        this.switchModel = switchModel;
         this.goMain = goMain;
-        
-    }
-
-    public ComboBox<String> getBgOptions() {
-        return bgOptions;
-    }
-
-    public ComboBox<String> getDifficultyOptions() {
-        return difficultyOptions;
     }
 
     public Region build() {
         Label title = new Label("Settings");
-        Button back = new Button("Back");
+        Button back = new Button("Main menu");
         back.setOnAction(e -> goMain.run());
-        bgOptions = new ComboBox<>();
-        bgOptions.getItems().addAll("Space", "Planet", "Nebula");
-        difficultyOptions = new ComboBox<>();
-        difficultyOptions.getItems().addAll("Easy", "Medium", "Hard");
 
-        root.getChildren().addAll(title, back, bgOptions);
+        // Background choices
+        bgOptions.getItems().setAll("Space", "Planet", "Nebula");
+        bgOptions.setValue(switchModel.backgroundName.get()); // initial UI matches model
+        Bindings.bindBidirectional(bgOptions.valueProperty(), switchModel.backgroundName);
+
+        // Difficulty choices
+        difficultyOptions.getItems().setAll("Easy", "Medium", "Hard");
+        difficultyOptions.setValue(switchModel.difficulty.get()); // initial UI matches model
+        Bindings.bindBidirectional(difficultyOptions.valueProperty(), switchModel.difficulty);
+
+        root.getChildren().addAll(title, new Label("Background:"), bgOptions,
+                new Label("Difficulty:"), difficultyOptions,
+                back);
         root.setAlignment(Pos.CENTER);
-        root.setStyle("-fx-padding: 20; -fx-background-color: transparent;");
         root.setPickOnBounds(false);
+
+        // Bind the background style (no listeners)
+        root.styleProperty().bind(Styles.backgroundStyle(switchModel.backgroundName, this));
+
         return root;
     }
-
 }
