@@ -1,4 +1,4 @@
-package alienmarauders.game;
+/* package alienmarauders.game;
 
 import alienmarauders.Controller;
 import javafx.geometry.Pos;
@@ -23,3 +23,4 @@ public class Game {
 
     public Region getRoot() { return root; }
 }
+ */

@@ -1,4 +1,4 @@
-package alienmarauders;
+/* package alienmarauders;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -26,3 +26,4 @@ public class Model {
         which.set(true);
     }
 }
+ */

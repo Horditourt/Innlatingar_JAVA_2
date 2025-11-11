@@ -1,5 +1,5 @@
 package alienmarauders.menu.settingsmenu;
 
-public class SettingsMenu {
+public class SettingsMenuModel {
     
 }

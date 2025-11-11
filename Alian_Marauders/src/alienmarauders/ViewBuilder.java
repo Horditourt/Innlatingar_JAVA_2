@@ -1,4 +1,4 @@
-package alienmarauders;
+/* package alienmarauders;
 
 import javafx.scene.Parent;
 import javafx.scene.image.Image;
@@ -19,6 +19,8 @@ public class ViewBuilder {
     public StackPane getContentLayer() { return contentLayer; }
 
     /** Static background from disk: e.g., images/space.png */
+
+    /* 
     public void setStaticBackground(String diskPath, boolean cover) {
         File f = new File(diskPath);
         Image img = new Image(f.toURI().toString(), true);
@@ -36,4 +38,4 @@ public class ViewBuilder {
         );
         root.setBackground(new Background(bg));
     }
-}
+} */

@@ -1,5 +1,5 @@
 package alienmarauders.menu.chatmenu;
 
-public class ChatMenu {
+public class ChatMenuModel {
     
 }

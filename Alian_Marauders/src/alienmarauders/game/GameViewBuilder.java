@@ -1,17 +1,19 @@
-package alienmarauders.menu.chatmenu;
+package alienmarauders.game;
 
+import alienmarauders.menu.chatmenu.ChatMenuModel;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 
-public class ChatMenuViewBuilder {
-    private ChatMenuModel model;
+public class GameViewBuilder {
+
+    private GameModel model;
     private Runnable goMain;
     private final VBox root = new VBox(10);
 
-    public ChatMenuViewBuilder(ChatMenuModel model, Runnable goMain) {
+    public GameViewBuilder(GameModel model, Runnable goMain) {
         this.model = model;
         this.goMain = goMain;
 
