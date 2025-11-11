@@ -27,4 +27,5 @@ public class SettingsMenuController {
     public Region getView() {
         return view.build();
     }
+    
 }

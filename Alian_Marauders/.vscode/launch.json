@@ -6,7 +6,7 @@
         "name": "Launch App",
         "request": "launch",
         "mainClass": "Main",
-        "vmArgs": "--module-path \"c:\\Users\\Hørdur\\OneDrive - Fróðskaparsetur Føroya\\handout\\lib\\javafx-sdk-24.0.1\\lib\\\" --add-modules javafx.controls"
+        "vmArgs": "--module-path \"c:\\Users\\Hørdur\\GitStuff\\SimProject\\handout\\lib\\javafx-sdk-24.0.1\\lib\\\" --add-modules javafx.controls"
         }
     ]
 }
