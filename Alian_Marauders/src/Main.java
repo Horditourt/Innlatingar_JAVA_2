@@ -8,7 +8,7 @@ public class Main extends Application {
     public void start(Stage stage) {
         SwitchController switchController = new SwitchController();
 
-        Scene scene = new Scene(switchController.getView(), 800, 600);
+        Scene scene = new Scene(switchController.getView(), 1000, 800);
         stage.setTitle("Alien Marauders");
         stage.setScene(scene);
         stage.show();

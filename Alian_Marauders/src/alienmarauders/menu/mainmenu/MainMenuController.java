@@ -2,6 +2,7 @@
 package alienmarauders.menu.mainmenu;
 
 import alienmarauders.SwitchModel;
+import alienmarauders.game.GameController;
 import javafx.application.Platform;
 import javafx.scene.layout.Region;
 
@@ -24,6 +25,7 @@ public class MainMenuController {
     private void onStartGame() {
         switchModel.mainMenuActive.set(false);
         switchModel.gameActive.set(true);
+        GameController.startGameLoop();
     }
     private void onChat() {
         switchModel.mainMenuActive.set(false);

@@ -1,4 +1,3 @@
-// src/alienmarauders/menu/settingsmenu/SettingsMenuViewBuilder.java
 package alienmarauders.menu.settingsmenu;
 
 import alienmarauders.SwitchModel;
@@ -10,7 +9,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.Region;
 
 public class SettingsMenuViewBuilder {
-    private final SettingsMenuModel model;
+    //private final SettingsMenuModel model;
     private final Runnable goMain;
     private final SwitchModel switchModel;
 
@@ -19,7 +18,7 @@ public class SettingsMenuViewBuilder {
     private final ComboBox<String> difficultyOptions = new ComboBox<>();
 
     public SettingsMenuViewBuilder(SettingsMenuModel model, SwitchModel switchModel, Runnable goMain) {
-        this.model = model;
+        //this.model = model;
         this.switchModel = switchModel;
         this.goMain = goMain;
     }

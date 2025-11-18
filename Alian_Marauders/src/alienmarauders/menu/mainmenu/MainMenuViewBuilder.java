@@ -11,7 +11,7 @@ import javafx.scene.layout.Region;
 
 public class MainMenuViewBuilder {
     private final VBox root = new VBox(12);
-    private final MainMenuModel model;
+    //private final MainMenuModel model;
     private final Runnable goGame, goChat, goSettings, goExit;
     private final SwitchModel switchModel;
 
@@ -23,7 +23,7 @@ public class MainMenuViewBuilder {
             Runnable goSettings,
             Runnable goExit
     ) {
-        this.model = model;
+        //this.model = model;
         this.switchModel = switchModel;
         this.goGame = goGame;
         this.goChat = goChat;
