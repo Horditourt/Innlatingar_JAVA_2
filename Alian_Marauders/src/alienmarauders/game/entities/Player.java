@@ -3,128 +3,102 @@ package alienmarauders.game.entities;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 
 public class Player extends Entity {
-    private double velocityX;
-    private double velocityY;
-    private double positionX;
-    private double positionY;
-    private static Color playerColor = Color.BLUE;
 
-    private double speed = 1;
+    private static final Color PLAYER_COLOR = Color.BLUE;
+
+    private double speed = 0.3; // tweak as you like
+
+    // Movement flags: 0 or 1
     private double moveLeft = 0;
     private double moveRight = 0;
     private double moveUp = 0;
     private double moveDown = 0;
 
-    public Player( double positionX, double positionY, double width, double height) {
-        this.positionX = positionX;
-        this.positionY = positionY;
-        this.width = (int) width;
-        this.height = (int) height;
-        
+    // Main constructor
+    public Player(double x, double y, double width, double height, Image image) {
+        super(x, y, width, height, image);
     }
 
-    public void move(double time) {
-        this.velocityX = (moveRight - moveLeft) * speed;
-        this.velocityY = (moveDown - moveUp) * speed;
+    // Convenience constructor (no image)
+    public Player(double x, double y, double width, double height) {
+        this(x, y, width, height, null);
     }
 
+    // Input handlers
     public void movingLeft(boolean val) {
-        this.moveLeft = val ? 1 : 0;
+        moveLeft = val ? 1 : 0;
     }
 
     public void movingRight(boolean val) {
-        this.moveRight = val ? 1 : 0;
+        moveRight = val ? 1 : 0;
     }
 
     public void movingUp(boolean val) {
-        this.moveUp = val ? 1 : 0;
+        moveUp = val ? 1 : 0;
     }
 
     public void movingDown(boolean val) {
-        this.moveDown = val ? 1 : 0;
+        moveDown = val ? 1 : 0;
     }
 
-    public void render(GraphicsContext gc)  {
-        gc.setFill(playerColor);
-        gc.fillRect(400, 550, 50, 50);
+    @Override
+    public void update(double deltaTimeMillis) {
+        double dt = deltaTimeMillis; // using ms scale
+
+        double vx = (moveRight - moveLeft) * speed;
+        double vy = (moveDown - moveUp) * speed;
+
+        x += vx * dt;
+        y += vy * dt;
+
+        // simple clamping so we don't fly off top/left
+        if (x < 0)
+            x = 0;
+        if (y < 0)
+            y = 0;
+        // you can add right/bottom clamping when you know canvas size
     }
 
-    private void moveTo(double x, double y) {
-        //this.positionX = x;
-        //this.positionY = y;
+    @Override
+    public void render(GraphicsContext gc) {
+        if (image != null) {
+            gc.drawImage(image, x, y, width, height);
+        } else {
+            gc.setFill(PLAYER_COLOR);
+            gc.fillRect(x, y, width, height);
         }
+    }
 
-    private void initializeKeyBindings(Canvas canvas, GraphicsContext gc) {
+    // Call this once from the view, with the canvas used in the game
+    public void initializeKeyBindings(Canvas canvas) {
         canvas.setFocusTraversable(true);
+
         canvas.setOnKeyPressed(event -> {
-            switch (event.getCode()) {
-                case LEFT:
-                    movingLeft(true);
-                    break;
-                case RIGHT:
-                    movingRight(true);
-                    break;
-                case UP:
-                    movingUp(true);
-                    break;
-                case DOWN:
-                    movingDown(true);
-                    break;
-                default:
-                    break;
+            KeyCode code = event.getCode();
+            switch (code) {
+                case LEFT -> movingLeft(true);
+                case RIGHT -> movingRight(true);
+                case UP -> movingUp(true);
+                case DOWN -> movingDown(true);
+                default -> {
+                }
             }
         });
 
         canvas.setOnKeyReleased(event -> {
-            switch (event.getCode()) {
-                case LEFT:
-                    movingLeft(false);
-                    break;
-                case RIGHT:
-                    movingRight(false);
-                    break;
-                case UP:
-                    movingUp(false);
-                    break;
-                case DOWN:
-                    movingDown(false);
-                    break;
-                default:
-                    break;
+            KeyCode code = event.getCode();
+            switch (code) {
+                case LEFT -> movingLeft(false);
+                case RIGHT -> movingRight(false);
+                case UP -> movingUp(false);
+                case DOWN -> movingDown(false);
+                default -> {
+                }
             }
         });
-    }
-
-    @Override
-    public int getPositionX() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPositionX'");
-    }
-
-    @Override
-    public int getPositionY() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPositionY'");
-    }
-
-    @Override
-    public int getWidth() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getWidth'");
-    }
-
-    @Override
-    public int getHeight() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getHeight'");
-    }
-
-    @Override
-    protected void render() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'render'");
     }
 }

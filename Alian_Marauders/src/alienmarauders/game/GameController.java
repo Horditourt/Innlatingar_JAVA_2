@@ -4,16 +4,26 @@ package alienmarauders.game;
 import alienmarauders.SwitchModel;
 import alienmarauders.game.entities.Player;
 import javafx.animation.AnimationTimer;
+import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 
 public class GameController {
-    private final GameModel model = new GameModel();
+    private final GameModel model;
     private final SwitchModel switchModel;
     private final GameViewBuilder view;
+    private static AnimationTimer gameLoop;
+    private boolean firstFrame = true;
+    private long lastNanoTime;
+    private Image playerImage;
 
     public GameController(SwitchModel switchModel) {
         this.switchModel = switchModel;
+        playerImage = new Image("/alienmarauders/images/nebula.png");
+        Player player = new Player(200.0, 300.0, 160.0, 160.0, playerImage);
+        this.model = new GameModel(player);
         this.view = new GameViewBuilder(model, this::onBackToMain).withSwitchModel(switchModel);
+        initializeGameLoop();
+        
     }
 
     private void onBackToMain() {
@@ -32,34 +42,27 @@ public class GameController {
 
     public Region getView() { return view.build(); }
 
-    static AnimationTimer gameLoop = new AnimationTimer() {
-        private boolean firstFrame = true;
-        long lastNanoTime = 0;
-        @Override
-        public void handle(long currentNanoTime) {
-            if (firstFrame) {
+    private void initializeGameLoop() {
+        gameLoop = new AnimationTimer() {
+            @Override
+            public void handle(long currentNanoTime) {
+                if (firstFrame) {
+                    lastNanoTime = currentNanoTime;
+                    firstFrame = false;
+                    return;
+                }
+                long elapsedNanos = currentNanoTime - lastNanoTime;
                 lastNanoTime = currentNanoTime;
-                firstFrame = false;
+                double deltaMillis = elapsedNanos / 1_000_000.0;
+
+                // update model
+                model.update(deltaMillis);
+
+                // render
+                view.render(model);
             }
-            long timeElapsedMilli = (currentNanoTime - lastNanoTime) / 1_000_000;
-            lastNanoTime = currentNanoTime;
-            // Update the model with the time elapsed since last frame
-            //model.update(timeElapsedMilli);
-            System.out.println("Game loop tick: " + timeElapsedMilli + " ms");
-
-            
-
-            //Collosion detection and response would go here
-
-            // remove entities that are marked for removal
-            // (e.g., enemies that have been destroyed)
-
-            //check if we need to end the game
-
-            //else continue the game and spawn new enemies as needed
-
-            //rendering would go here
-        }
-    };
+        };
+        gameLoop.start();
+    }
     
 }

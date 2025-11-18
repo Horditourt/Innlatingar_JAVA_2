@@ -1,5 +1,6 @@
 package alienmarauders.game.entities;
 
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
@@ -13,15 +14,12 @@ public class Enemy extends Entity {
     private Image[] images;
     private int numImages;
     // Initial position of the enemy
-    private double posX0;
-    private double posY0;
     // Find appropriate hp and speed
     private int hitPoints = 3;
     private double speed = 0.05;
 
     public Enemy(double posX0, double posY0, double width, double height, Image image, int numImages) {
-        this.posX0 = posX0;
-        this.posY0 = posY0;
+        super(posX0, posY0, width, height, image);
         this.numImages = numImages;
         images = new Image[numImages];
         getImageStrides(image);
@@ -68,32 +66,16 @@ public class Enemy extends Entity {
     }
 
     @Override
-    public int getPositionX() {
+    public void update(double deltaTimeMillis) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPositionX'");
+        throw new UnsupportedOperationException("Unimplemented method 'update'");
     }
 
     @Override
-    public int getPositionY() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPositionY'");
-    }
-
-    @Override
-    public int getWidth() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getWidth'");
-    }
-
-    @Override
-    public int getHeight() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getHeight'");
-    }
-
-    @Override
-    protected void render() {
+    public void render(GraphicsContext gc) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'render'");
     }
+
+    
 }

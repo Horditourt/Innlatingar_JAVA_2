@@ -1,35 +1,27 @@
 package alienmarauders.game.entities;
 
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
+
 public class Shot extends Entity {
 
-    @Override
-    public int getPositionX() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPositionX'");
+    public Shot(double x, double y, double width, double height, Image image) {
+        super(x, y, width, height, image);
+        //TODO Auto-generated constructor stub
     }
 
     @Override
-    public int getPositionY() {
+    public void update(double deltaTimeMillis) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getPositionY'");
+        throw new UnsupportedOperationException("Unimplemented method 'update'");
     }
 
     @Override
-    public int getWidth() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getWidth'");
-    }
-
-    @Override
-    public int getHeight() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getHeight'");
-    }
-
-    @Override
-    protected void render() {
+    public void render(GraphicsContext gc) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'render'");
     }
+
+    
     
 }

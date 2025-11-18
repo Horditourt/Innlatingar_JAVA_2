@@ -13,7 +13,7 @@ public class Score {
 
     public void updateScore(int amount) {
         score += amount;
-    }  
+    }
 
     public void resetScore() {
         score = 0;
@@ -21,11 +21,11 @@ public class Score {
 
     public void render(GraphicsContext gc) {
         gc.setFont(new Font(22));
-        gc.setFill(Color.RED);
-        gc.fillText("Score: " + score, 1,1 
-        // TODO Globals.WINDOW_WIDTH * 0.025,
-        // TODO Globals.WINDOW_HEIGHT * 0.975
-        );
+        gc.setFill(Color.BEIGE);
+
+        double x = gc.getCanvas().getWidth() * 0.025; // ~2.5% from the left
+        double y = gc.getCanvas().getHeight() * 0.95; // ~95% down
+
+        gc.fillText("Score: " + score, x, y);
     }
-    
 }
