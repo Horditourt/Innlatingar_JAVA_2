@@ -25,24 +25,18 @@ public class Enemy extends Entity {
         getImageStrides(image);
         for (int i = 0; i < numImages; i++) {
             this.images[i] = new Image(
-                image.getUrl(),
-                width,
-                height,
-                false,
-                false,
-                false
-            );
+                    image.getUrl(),
+                    width,
+                    height,
+                    false,
+                    false,
+                    false);
         }
-        
+
     }
 
     public void takeDamage(int amount) {
         this.hitPoints -= amount;
-    }
-
-    private void moveTo(double x, double y) {
-        //this.positionX = x;
-        //this.positionY = y;
     }
 
     private void getImageStrides(Image image) {
@@ -57,8 +51,8 @@ public class Enemy extends Entity {
                 int offset = i * w;
                 for (int x = offset; x < offset + w; x++) {
                     PixelWriter.setColor(
-                        x - offset, y,
-                        PixelReader.getColor(x, y));
+                            x - offset, y,
+                            PixelReader.getColor(x, y));
                 }
             }
             images[i] = imageSection;
@@ -67,15 +61,27 @@ public class Enemy extends Entity {
 
     @Override
     public void update(double deltaTimeMillis) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
+        // basic vertical drift (moves down slowly)
+        double speedY = 0.03; // pixels per millisecond => 30 px/sec
+
+        y += speedY * deltaTimeMillis;
+
+        // optional: if it goes off bottom, mark as dead
+        // (or trigger game over, etc.)
+        // if (y > maxY) { kill(); }
     }
 
     @Override
     public void render(GraphicsContext gc) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'render'");
+        if (images != null && images.length > 0) {
+            gc.drawImage(images[0], x, y, width, height);
+        } else if (image != null) {
+            gc.drawImage(image, x, y, width, height);
+        } else {
+            // fallback: draw a red rectangle if image missing
+            gc.setFill(javafx.scene.paint.Color.RED);
+            gc.fillRect(x, y, width, height);
+        }
     }
 
-    
 }

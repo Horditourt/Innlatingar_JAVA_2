@@ -1,8 +1,8 @@
 // src/alienmarauders/menu/chatmenu/ChatMenuViewBuilder.java
 package alienmarauders.menu.chatmenu;
 
-import alienmarauders.SwitchModel;
 import alienmarauders.Styles;
+import alienmarauders.SwitchModel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;

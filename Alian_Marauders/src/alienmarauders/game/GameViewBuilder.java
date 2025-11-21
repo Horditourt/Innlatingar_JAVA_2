@@ -1,31 +1,29 @@
 package alienmarauders.game;
 
 import alienmarauders.SwitchModel;
+import alienmarauders.Styles;
 import alienmarauders.game.entities.Enemy;
 import alienmarauders.game.entities.Player;
 import alienmarauders.game.entities.Shot;
-import alienmarauders.Styles;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 
 public class GameViewBuilder {
+
     private final GameModel model;
-    private final Runnable goMain;
+    private final Runnable onBack;
+    private SwitchModel switchModel;
+
     private Canvas canvas;
     private GraphicsContext gc;
-    private SwitchModel switchModel;
-    private Image backgroundImages;
 
-    public GameViewBuilder(GameModel model, Runnable goMain) {
+    public GameViewBuilder(GameModel model, Runnable onBack) {
         this.model = model;
-        this.goMain = goMain;
+        this.onBack = onBack;
     }
 
     public GameViewBuilder withSwitchModel(SwitchModel switchModel) {
@@ -34,44 +32,80 @@ public class GameViewBuilder {
     }
 
     public Region build() {
-        StackPane root = new StackPane();
-        Label title = new Label("Game (placeholder)");
-        Button back = new Button("Main menu");
-        back.setOnAction(e -> goMain.run());
-
+        // initial size; bindings will override after layout
         canvas = new Canvas(800, 600);
+        gc = canvas.getGraphicsContext2D();
+
+        Button back = new Button("Back");
+        back.setOnAction(e -> onBack.run());
+
+        StackPane root = new StackPane();
+
+        root.setMinSize(0, 0);
+        root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+
+        root.getChildren().addAll(canvas, back);
+
+        StackPane.setAlignment(back, Pos.BOTTOM_RIGHT);
+
+        // 🔹 Focus & key bindings on the *model's* player
+        Player player = model.getPlayer();
+
         canvas.setFocusTraversable(true);
         canvas.requestFocus();
-        Player player = model.getPlayer();
-        player.initializeKeyBindings(canvas);
+        player.initializeKeyBindings(canvas, () -> model.playerShoot());
 
-        gc = canvas.getGraphicsContext2D();
-        // backgroundImages = new
-        // Image("alienmarauders/resources/images/backgrounds/space.png");
-        // Player player = new Player(400, 500, 30, 30, backgroundImages);
-        // player.render(gc);
-        root.getChildren().add(canvas);
-        root.getChildren().addAll(title, back);
-        root.setAlignment(Pos.BOTTOM_RIGHT);
-        root.setPickOnBounds(false);
+        // 🔹 Set bounds when canvas size becomes valid and on each resize
+        root.widthProperty().addListener((obs, oldW, newW) -> {
+            double w = newW.doubleValue();
+            if (w <= 0)
+                return;
 
+            canvas.setWidth(w);
+            model.getPlayer().setBounds(canvas.getWidth(), canvas.getHeight());
+        });
+
+        root.heightProperty().addListener((obs, oldH, newH) -> {
+            double h = newH.doubleValue();
+            if (h <= 0)
+                return;
+
+            canvas.setHeight(h);
+            model.getPlayer().setBounds(canvas.getWidth(), canvas.getHeight());
+        });
+
+        // Optional: background style from settings
         if (switchModel != null) {
             root.styleProperty().bind(Styles.backgroundStyle(switchModel.backgroundName, this));
         }
+
         return root;
     }
 
     public void render(GameModel model) {
+        if (model.getEnemies().isEmpty()) {
+            double w = canvas.getWidth();
+            double h = canvas.getHeight();
+
+            // if size isn't ready yet, fall back to something sane
+            if (w <= 0 || h <= 0) {
+                w = 800;
+                h = 600;
+            }
+
+            model.initEnemyFormation(w, h);
+        }
+
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        // background if any
+        // draw entities
         model.getPlayer().render(gc);
+        model.getScore().render(gc);
         for (Enemy e : model.getEnemies()) {
             e.render(gc);
         }
         for (Shot s : model.getShots()) {
             s.render(gc);
         }
-        model.getScore().render(gc);
     }
 }

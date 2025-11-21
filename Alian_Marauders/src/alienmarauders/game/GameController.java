@@ -11,19 +11,22 @@ public class GameController {
     private final GameModel model;
     private final SwitchModel switchModel;
     private final GameViewBuilder view;
-    private static AnimationTimer gameLoop;
+
+    private AnimationTimer gameLoop;
     private boolean firstFrame = true;
     private long lastNanoTime;
-    private Image playerImage;
 
     public GameController(SwitchModel switchModel) {
         this.switchModel = switchModel;
-        playerImage = new Image("/alienmarauders/images/nebula.png");
+
+        Image playerImage = new Image("/alienmarauders/images/nebula.png");
         Player player = new Player(200.0, 300.0, 160.0, 160.0, playerImage);
+
         this.model = new GameModel(player);
         this.view = new GameViewBuilder(model, this::onBackToMain).withSwitchModel(switchModel);
+
         initializeGameLoop();
-        
+
     }
 
     private void onBackToMain() {
@@ -32,15 +35,19 @@ public class GameController {
         stopGameLoop();
     }
 
-    public static void startGameLoop() {
+    public void startGameLoop(double w, double h) {
+        model.reset(w, h);
+        firstFrame = true;
         gameLoop.start();
     }
 
-    public static void stopGameLoop() {
+    public void stopGameLoop() {
         gameLoop.stop();
     }
 
-    public Region getView() { return view.build(); }
+    public Region getView() {
+        return view.build();
+    }
 
     private void initializeGameLoop() {
         gameLoop = new AnimationTimer() {
@@ -62,7 +69,6 @@ public class GameController {
                 view.render(model);
             }
         };
-        gameLoop.start();
     }
-    
+
 }

@@ -18,6 +18,10 @@ public class Player extends Entity {
     private double moveUp = 0;
     private double moveDown = 0;
 
+    // Bounding box for containment (set from outside)
+    private double maxX = 800; // default, overwritten by setBounds
+    private double maxY = 600;
+
     // Main constructor
     public Player(double x, double y, double width, double height, Image image) {
         super(x, y, width, height, image);
@@ -45,6 +49,11 @@ public class Player extends Entity {
         moveDown = val ? 1 : 0;
     }
 
+    public void setBounds(double maxX, double maxY) {
+        this.maxX = maxX;
+        this.maxY = maxY;
+    }
+
     @Override
     public void update(double deltaTimeMillis) {
         double dt = deltaTimeMillis; // using ms scale
@@ -60,7 +69,10 @@ public class Player extends Entity {
             x = 0;
         if (y < 0)
             y = 0;
-        // you can add right/bottom clamping when you know canvas size
+        if (x + width > maxX)
+            x = maxX - width;
+        if (y + height > maxY)
+            y = maxY - height;
     }
 
     @Override
@@ -73,8 +85,24 @@ public class Player extends Entity {
         }
     }
 
+    /**
+     * Called from GameModel.reset(w,h).
+     * Re-centers player and clears any stuck movement flags.
+     */
+    public void resetForNewGame(double playWidth, double playHeight) {
+        // center bottom with a small margin
+        this.x = playWidth / 2.0 - this.width / 2.0;
+        this.y = playHeight - this.height - 40;
+
+        // clear input so player doesn't keep drifting
+        moveLeft = moveRight = moveUp = moveDown = 0;
+
+        // bounds follow playfield
+        setBounds(playWidth, playHeight);
+    }
+
     // Call this once from the view, with the canvas used in the game
-    public void initializeKeyBindings(Canvas canvas) {
+    public void initializeKeyBindings(Canvas canvas, Runnable onShoot) {
         canvas.setFocusTraversable(true);
 
         canvas.setOnKeyPressed(event -> {
@@ -84,6 +112,11 @@ public class Player extends Entity {
                 case RIGHT -> movingRight(true);
                 case UP -> movingUp(true);
                 case DOWN -> movingDown(true);
+                case SPACE -> {
+                    if (onShoot != null) {
+                        onShoot.run();
+                    }
+                }
                 default -> {
                 }
             }

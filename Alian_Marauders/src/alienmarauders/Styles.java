@@ -21,7 +21,6 @@ public final class Styles {
             };
             String url = resourceAnchor.getClass().getResource(file).toExternalForm();
             return """
-                   -fx-padding: 20;
                    -fx-background-color: black;
                    -fx-background-image: url('%s');
                    -fx-background-size: cover;
