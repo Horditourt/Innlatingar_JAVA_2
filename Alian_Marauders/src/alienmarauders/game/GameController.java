@@ -6,6 +6,7 @@ import alienmarauders.game.entities.Player;
 import javafx.animation.AnimationTimer;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Region;
+import javafx.application.Platform;
 
 public class GameController {
     private final GameModel model;
@@ -39,6 +40,22 @@ public class GameController {
         model.reset(w, h);
         firstFrame = true;
         gameLoop.start();
+    }
+
+    public void startGameLoopAuto() {
+        // Run after the current layout pass so canvas size is correct
+        Platform.runLater(() -> {
+            double w = view.getPlayWidth();
+            double h = view.getPlayHeight();
+
+            // fallback just in case
+            if (w <= 0 || h <= 0) {
+                w = 800;
+                h = 600;
+            }
+
+            startGameLoop(w, h);
+        });
     }
 
     public void stopGameLoop() {

@@ -27,8 +27,7 @@ public class MainMenuController {
     private void onStartGame() {
         switchModel.mainMenuActive.set(false);
         switchModel.gameActive.set(true);
-        gameController.startGameLoop(800, 600);
-
+        gameController.startGameLoopAuto();
     }
 
     private void onChat() {

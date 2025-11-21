@@ -118,18 +118,27 @@ public class GameModel {
     }
 
     private void handleCollisions() {
-        for (Shot s : shots) {
-            for (Enemy e : enemies) {
-                if (CollisionDetection.Aabb(s, e)) {
-                    s.kill();
-                    e.takeDamage(1);
-                    if (!e.isAlive()) {
-                        score.updateScore(100);
-                    }
+
+    for (Shot s : shots) {
+        if (!s.isAlive()) continue;
+
+        for (Enemy e : enemies) {
+            if (!e.isAlive()) continue;
+
+            if (CollisionDetection.Aabb(s, e)) {
+                s.kill();
+                e.takeDamage(1);
+
+                if (!e.isAlive()) {
+                    score.updateScore(100);
                 }
+
+                break; // shot hits only one enemy
             }
         }
     }
+}
+
 
     private void cleanUp() {
         enemies.removeIf(e -> !e.isAlive());

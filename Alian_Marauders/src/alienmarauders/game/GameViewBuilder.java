@@ -108,4 +108,13 @@ public class GameViewBuilder {
             s.render(gc);
         }
     }
+
+    public double getPlayWidth() {
+        return (canvas != null && canvas.getWidth() > 0) ? canvas.getWidth() : 800;
+    }
+
+    public double getPlayHeight() {
+        return (canvas != null && canvas.getHeight() > 0) ? canvas.getHeight() : 600;
+    }
+
 }

@@ -37,6 +37,9 @@ public class Enemy extends Entity {
 
     public void takeDamage(int amount) {
         this.hitPoints -= amount;
+        if (hitPoints <= 0) {
+            kill();
+        }
     }
 
     private void getImageStrides(Image image) {
