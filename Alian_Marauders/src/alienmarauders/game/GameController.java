@@ -24,7 +24,10 @@ public class GameController {
         Player player = new Player(200.0, 300.0, 160.0, 160.0, playerImage);
 
         this.model = new GameModel(player);
-        this.view = new GameViewBuilder(model, this::onBackToMain).withSwitchModel(switchModel);
+        this.view = new GameViewBuilder(
+                model,
+                this::onBackToMain,
+                this::onRestartGame).withSwitchModel(switchModel);
 
         initializeGameLoop();
 
@@ -34,6 +37,15 @@ public class GameController {
         switchModel.gameActive.set(false);
         switchModel.mainMenuActive.set(true);
         stopGameLoop();
+    }
+
+    private void onRestartGame() {
+        // stop if already stopped/running (safe)
+        stopGameLoop();
+        startGameLoopAuto();
+
+        // make sure canvas keeps focus after restart
+        Platform.runLater(() -> view.requestCanvasFocus());
     }
 
     public void startGameLoop(double w, double h) {
@@ -84,8 +96,13 @@ public class GameController {
 
                 // render
                 view.render(model);
+
+                // check for game over
+                if (model.isGameOver() && !model.isFlashRed()) {
+                    stopGameLoop();
+                    return;
+                }
             }
         };
     }
-
 }

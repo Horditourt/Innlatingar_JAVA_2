@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
@@ -16,14 +17,18 @@ public class GameViewBuilder {
 
     private final GameModel model;
     private final Runnable onBack;
+    private final Runnable onRestart;
     private SwitchModel switchModel;
 
     private Canvas canvas;
     private GraphicsContext gc;
+    private Label gameOverLabel;
+    private Label waveLabel;
 
-    public GameViewBuilder(GameModel model, Runnable onBack) {
+    public GameViewBuilder(GameModel model, Runnable onBack, Runnable onRestart) {
         this.model = model;
         this.onBack = onBack;
+        this.onRestart = onRestart;
     }
 
     public GameViewBuilder withSwitchModel(SwitchModel switchModel) {
@@ -44,7 +49,23 @@ public class GameViewBuilder {
         root.setMinSize(0, 0);
         root.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-        root.getChildren().addAll(canvas, back);
+        gameOverLabel = new Label();
+        gameOverLabel.setVisible(false);
+        gameOverLabel.managedProperty().bind(gameOverLabel.visibleProperty());
+
+        gameOverLabel.setStyle(Styles.gameOverStyle());
+
+        StackPane.setAlignment(gameOverLabel, Pos.CENTER);
+
+        waveLabel = new Label();
+        waveLabel.setVisible(false);
+        waveLabel.managedProperty().bind(waveLabel.visibleProperty());
+        waveLabel.setStyle(Styles.waveBannerStyle());
+
+        StackPane.setAlignment(waveLabel, Pos.TOP_CENTER);
+        root.getChildren().add(waveLabel);
+
+        root.getChildren().addAll(canvas, back, gameOverLabel);
 
         StackPane.setAlignment(back, Pos.BOTTOM_RIGHT);
 
@@ -54,6 +75,15 @@ public class GameViewBuilder {
         canvas.setFocusTraversable(true);
         canvas.requestFocus();
         player.initializeKeyBindings(canvas, () -> model.playerShoot());
+
+        canvas.addEventHandler(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER
+                    && model.isGameOver()
+                    && onRestart != null) {
+                onRestart.run();
+                e.consume();
+            }
+        });
 
         // 🔹 Set bounds when canvas size becomes valid and on each resize
         root.widthProperty().addListener((obs, oldW, newW) -> {
@@ -83,29 +113,42 @@ public class GameViewBuilder {
     }
 
     public void render(GameModel model) {
-        if (model.getEnemies().isEmpty()) {
-            double w = canvas.getWidth();
-            double h = canvas.getHeight();
-
-            // if size isn't ready yet, fall back to something sane
-            if (w <= 0 || h <= 0) {
-                w = 800;
-                h = 600;
-            }
-
-            model.initEnemyFormation(w, h);
-        }
-
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        // draw entities
         model.getPlayer().render(gc);
         model.getScore().render(gc);
-        for (Enemy e : model.getEnemies()) {
+        for (Enemy e : model.getEnemies())
             e.render(gc);
-        }
-        for (Shot s : model.getShots()) {
+        for (Shot s : model.getShots())
             s.render(gc);
+
+        // flash overlay
+        if (model.isFlashRed()) {
+            gc.setFill(javafx.scene.paint.Color.rgb(255, 0, 0, 0.55));
+            gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        }
+
+        // wave overlay
+        if (model.isWaveBannerActive()) {
+            waveLabel.setText(model.getWaveText());
+            waveLabel.setVisible(true);
+        } else {
+            waveLabel.setVisible(false);
+        }
+
+        // game over overlay
+        if (model.isGameOver()) {
+            gameOverLabel.setText("GAME OVER\nPress Back");
+            gameOverLabel.setVisible(true);
+        } else {
+            gameOverLabel.setVisible(false);
+        }
+
+    }
+
+    public void requestCanvasFocus() {
+        if (canvas != null) {
+            canvas.requestFocus();
         }
     }
 
