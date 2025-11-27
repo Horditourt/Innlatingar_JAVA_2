@@ -3,7 +3,8 @@ package alienmarauders.game;
 import java.util.ArrayList;
 import java.util.Random;
 import alienmarauders.game.entities.*;
-import alienmarauders.game.movement.MovementStrategies;
+import alienmarauders.game.movement.*;
+import alienmarauders.game.formation.*;
 import javafx.scene.image.Image;
 
 public class GameModel {
@@ -86,15 +87,10 @@ public class GameModel {
             if (flashMillisRemaining < 0) flashMillisRemaining = 0;
         }
 
-        if (waveMillisRemaining > 0) {
-           waveMillisRemaining -= deltaTimeMillis;
-           if (waveMillisRemaining < 0) waveMillisRemaining = 0;
-        }
-
         if (gameOver) return;
 
-        // stop the game during wave intro
-        if (waveMillisRemaining > 0) return;
+        // wave intro logic isolated here
+        if (handleWaveIntro(deltaTimeMillis)) return;
 
         player.update(deltaTimeMillis);
 
@@ -129,6 +125,19 @@ public class GameModel {
         }
     }
 
+    /**
+    * Handles wave intro timing.
+    * @return true if we are still in the intro and gameplay should pause.
+    */
+    private boolean handleWaveIntro(double deltaTimeMillis) {
+        if (waveMillisRemaining > 0) {
+            waveMillisRemaining -= deltaTimeMillis;
+            if (waveMillisRemaining < 0) waveMillisRemaining = 0;
+        }
+        return waveMillisRemaining > 0;
+    }
+
+
     private void handleCollisions() {
         for (Shot s : shots) {
             if (!s.isAlive()) continue;
@@ -161,50 +170,38 @@ public class GameModel {
             enemyImage = new Image("/alienmarauders/images/planets.png");
         }
 
-        // Random formation choice
-        int formation = rng.nextInt(3); // 0,1,2
-        int cols, rows;
-        double startY;
-
-        switch (formation) {
-            case 0 -> { cols = 8; rows = 3; startY = 50; }   // standard grid
-            case 1 -> { cols = 6; rows = 4; startY = 30; }   // taller block
-            default -> { cols = 10; rows = 2; startY = 70; } // wide thin line
+        // Choose random movement strategy
+        MovementStrategy movement;
+        int m = rng.nextInt(3); // 0,1,2
+        switch (m) {
+            case 0 -> movement = new NoMovementStrategy();
+            case 1 -> movement = new MoveDownStrategy();
+            default -> movement = new ZigZagMovementStrategy();
         }
+        movement.setSpeedMultiplier(speedMultiplier);
 
-        // Random movement choice
-        MovementStrategies move = switch (rng.nextInt(3)) {
-            case 0 -> MovementStrategies.NO_MOVE;
-            case 1 -> MovementStrategies.DOWN;
-            default -> MovementStrategies.ZIGZAG;
-        };
-
-        double enemyWidth = 40;
-        double enemyHeight = 30;
-        double horizontalSpacing = 20;
-        double verticalSpacing = 20;
-
-        double totalWidth = cols * enemyWidth + (cols - 1) * horizontalSpacing;
-        double startX = (playWidth - totalWidth) / 2.0;
-
-        enemies.clear();
+        // Random formation choice using that movement
+        Formation formation;
+        int f = rng.nextInt(2); // 0 or 1
+        if (f == 0) {
+            formation = new GridFormation(
+                    playWidth, playHeight,
+                    enemyImage, movement, speedMultiplier,
+                    8, 3, 50   // cols, rows, startY
+            );
+        } else {
+            formation = new VFormation(
+                    playWidth, playHeight,
+                    enemyImage, movement, speedMultiplier,
+                    5          // rows
+            );
+        }
 
         waveText = "WAVE " + wave;
-        waveMillisRemaining = 1200;  // 1.2 seconds
+        waveMillisRemaining = 1200;
 
-
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                double x = startX + col * (enemyWidth + horizontalSpacing);
-                double y = startY + row * (enemyHeight + verticalSpacing);
-
-                Enemy enemy = new Enemy(x, y, enemyWidth, enemyHeight, enemyImage, 1);
-                enemy.setBounds(playWidth, playHeight);
-                enemy.setMovement(move);
-                enemy.setSpeedMultiplier(speedMultiplier);
-
-                enemies.add(enemy);
-            }
-        }
+        formation.createEnemies();
+        enemies.clear();
+        enemies.addAll(formation.getEnemies());
     }
 }

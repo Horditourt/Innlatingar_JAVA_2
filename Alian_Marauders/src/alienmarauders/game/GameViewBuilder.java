@@ -117,10 +117,13 @@ public class GameViewBuilder {
 
         model.getPlayer().render(gc);
         model.getScore().render(gc);
-        for (Enemy e : model.getEnemies())
-            e.render(gc);
-        for (Shot s : model.getShots())
-            s.render(gc);
+        // hide enemies + shots during wave intro
+        if (!model.isWaveBannerActive()) {
+            for (Enemy e : model.getEnemies())
+                e.render(gc);
+            for (Shot s : model.getShots())
+                s.render(gc);
+        }
 
         // flash overlay
         if (model.isFlashRed()) {
