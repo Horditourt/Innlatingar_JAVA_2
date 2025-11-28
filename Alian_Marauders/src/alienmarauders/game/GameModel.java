@@ -13,7 +13,26 @@ public class GameModel {
     private final ArrayList<Enemy> enemies = new ArrayList<>();
     private final ArrayList<Shot> shots = new ArrayList<>();
     private final Score score = new Score();
-    private Image enemyImage;
+        // Enemy sprite sheets (each is a row of animation frames)
+    private final Image blueMonsterSheet =
+            new Image("/alienmarauders/images/BlueMonster.png");
+    private final Image greenMonsterSheet =
+            new Image("/alienmarauders/images/GreenMonster.png");
+    private final Image redMonsterSheet =
+            new Image("/alienmarauders/images/RedMonster.png");
+
+    private final Image[] enemySheets = {
+            blueMonsterSheet,
+            greenMonsterSheet,
+            redMonsterSheet
+    };
+
+    // Matching frame counts: blue=4, green=2, red=2
+    private final int[] enemyFrameCounts = {
+            4,  // Blue
+            2,  // Green
+            2   // Red
+    };
 
     private double playWidth = 800;
     private double playHeight = 600;
@@ -166,10 +185,6 @@ public class GameModel {
     // ---------------- WAVES / FORMATIONS / STRATEGIES ----------------
 
     protected void spawnNewWave() {
-        if (enemyImage == null) {
-            enemyImage = new Image("/alienmarauders/images/planets.png");
-        }
-
         // Choose random movement strategy
         MovementStrategy movement;
         int m = rng.nextInt(3); // 0,1,2
@@ -181,21 +196,28 @@ public class GameModel {
         movement.setSpeedMultiplier(speedMultiplier);
 
         // Random formation choice using that movement
-        Formation formation;
-        int f = rng.nextInt(2); // 0 or 1
-        if (f == 0) {
-            formation = new GridFormation(
-                    playWidth, playHeight,
-                    enemyImage, movement, speedMultiplier,
-                    8, 3, 50   // cols, rows, startY
-            );
-        } else {
-            formation = new VFormation(
-                    playWidth, playHeight,
-                    enemyImage, movement, speedMultiplier,
-                    5          // rows
-            );
-        }
+    Formation formation;
+    int f = rng.nextInt(3); // 0, 1 or 2
+
+    if (f == 0) {
+        formation = new GridFormation(
+                playWidth, playHeight,
+                enemySheets, enemyFrameCounts,movement, speedMultiplier,
+                8, 3, 50, rng   // cols, rows, startY
+        );
+    } else if (f == 1) {
+        formation = new VFormation(
+                playWidth, playHeight,
+                enemySheets, enemyFrameCounts, movement, speedMultiplier,
+                5, rng          // rows
+        );
+    } else {
+        formation = new ArcFormation(
+                playWidth, playHeight,
+                enemySheets, enemyFrameCounts, movement, speedMultiplier,
+                9, rng          // enemyCount along the arc
+        );
+    }
 
         waveText = "WAVE " + wave;
         waveMillisRemaining = 1200;

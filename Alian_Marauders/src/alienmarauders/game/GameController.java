@@ -20,7 +20,7 @@ public class GameController {
     public GameController(SwitchModel switchModel) {
         this.switchModel = switchModel;
 
-        Image playerImage = new Image("/alienmarauders/images/nebula.png");
+        Image playerImage = new Image("/alienmarauders/images/Player.png");
         Player player = new Player(200.0, 300.0, 60.0, 60.0, playerImage);
 
         this.model = new GameModel(player);

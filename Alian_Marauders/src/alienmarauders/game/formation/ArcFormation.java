@@ -8,13 +8,12 @@ import java.util.ArrayList;
 import java.util.Random;
 
 /**
- * Creates enemies arranged in a V-shape formation.
+ * Creates enemies arranged along a circular arc.
  * <p>
- * The top of the V is near the top center of the play area,
- * and each subsequent row adds one enemy on the left and one
- * on the right, offset diagonally downwards.
+ * The enemies are placed along an arc above the player,
+ * centered horizontally in the play area.
  */
-public class VFormation implements Formation {
+public class ArcFormation implements Formation {
 
     private final double playWidth;
     private final double playHeight;
@@ -22,13 +21,13 @@ public class VFormation implements Formation {
     private final int[] enemyFrameCounts;
     private final MovementStrategy movement;
     private final double speedMultiplier;
-    private final int rows;
+    private final int enemyCount;
     private final Random rng;
 
     private final ArrayList<Enemy> enemies = new ArrayList<>();
 
     /**
-     * Constructs a new V-shaped enemy formation.
+     * Constructs a new arc-shaped enemy formation.
      *
      * @param playWidth        width of the play area in pixels
      * @param playHeight       height of the play area in pixels
@@ -36,16 +35,16 @@ public class VFormation implements Formation {
      * @param enemyFrameCounts array of frame counts matching {@code enemySheets}
      * @param movement         movement strategy used by all enemies in this formation
      * @param speedMultiplier  speed multiplier for the enemies in this formation
-     * @param rows             number of rows in the V (top row is 1 enemy)
+     * @param enemyCount       number of enemies to place along the arc
      * @param rng              random number generator used to pick enemy sprites
      */
-    public VFormation(double playWidth, double playHeight,
-                      Image[] enemySheets,
-                      int[] enemyFrameCounts,
-                      MovementStrategy movement,
-                      double speedMultiplier,
-                      int rows,
-                      Random rng) {
+    public ArcFormation(double playWidth, double playHeight,
+                        Image[] enemySheets,
+                        int[] enemyFrameCounts,
+                        MovementStrategy movement,
+                        double speedMultiplier,
+                        int enemyCount,
+                        Random rng) {
 
         this.playWidth = playWidth;
         this.playHeight = playHeight;
@@ -53,12 +52,12 @@ public class VFormation implements Formation {
         this.enemyFrameCounts = enemyFrameCounts;
         this.movement = movement;
         this.speedMultiplier = speedMultiplier;
-        this.rows = rows;
+        this.enemyCount = enemyCount;
         this.rng = rng;
     }
 
     /**
-     * Creates the enemies in a V-shape and stores them internally.
+     * Creates the enemies along a circular arc and stores them internally.
      * Call {@link #getEnemies()} afterwards to retrieve the list.
      */
     @Override
@@ -73,25 +72,28 @@ public class VFormation implements Formation {
         double enemyWidth = frameWidth;
         double enemyHeight = frameHeight;
 
-        double spacingX = enemyWidth + 10;
-        double spacingY = enemyHeight + 10;
+        // Arc geometry
+        double centerX = playWidth / 2.0;
+        double centerY = 120;   // vertical center of the arc
+        double radius = 150;    // radius of the arc
 
-        // Top center position of the V
-        double startY = 50;
-        double centerX = playWidth / 2.0 - enemyWidth / 2.0;
+        // Place enemies from -60° to +60° along the arc
+        double startDeg = -60.0;
+        double endDeg = 60.0;
 
-        // Row 0: one enemy at the top center
-        addEnemy(centerX, startY, enemyWidth, enemyHeight);
+        double startRad = Math.toRadians(startDeg);
+        double endRad = Math.toRadians(endDeg);
+        double step = (enemyCount > 1)
+                ? (endRad - startRad) / (enemyCount - 1)
+                : 0.0;
 
-        // Subsequent rows: one on left, one on right, forming a V
-        for (int r = 1; r < rows; r++) {
-            double y = startY + r * spacingY;
+        for (int i = 0; i < enemyCount; i++) {
+            double angle = startRad + i * step;
 
-            double xLeft = centerX - r * spacingX;
-            double xRight = centerX + r * spacingX;
+            double ex = centerX + Math.cos(angle) * radius - enemyWidth / 2.0;
+            double ey = centerY + Math.sin(angle) * radius - enemyHeight / 2.0;
 
-            addEnemy(xLeft, y, enemyWidth, enemyHeight);
-            addEnemy(xRight, y, enemyWidth, enemyHeight);
+            addEnemy(ex, ey, enemyWidth, enemyHeight);
         }
     }
 
