@@ -13,6 +13,15 @@ public class GameModel {
     private final ArrayList<Enemy> enemies = new ArrayList<>();
     private final ArrayList<Shot> shots = new ArrayList<>();
     private final Score score = new Score();
+
+    // Shooting state: true while SPACE is held
+    private boolean shooting = false;
+
+    // Shooting cooldown (ms) and timer
+    private double shotCooldownMillis = 150; // tweak: smaller = faster fire
+    private double shotTimer = 0;
+
+
         // Enemy sprite sheets (each is a row of animation frames)
     private final Image blueMonsterSheet =
             new Image("/alienmarauders/images/BlueMonster.png");
@@ -62,8 +71,6 @@ public class GameModel {
     public boolean isWaveBannerActive() { return waveMillisRemaining > 0; }
     public String getWaveText() { return waveText; }
 
-
-
     public void playerShoot() {
         double shotWidth = 5;
         double shotHeight = 15;
@@ -76,6 +83,27 @@ public class GameModel {
         double shotY = py - shotHeight;
 
         shots.add(new Shot(shotX, shotY, shotWidth, shotHeight, null));
+    }
+
+    public void setShooting(boolean shooting) {
+        this.shooting = shooting;
+    }
+
+    private void handleShooting(double deltaTimeMillis) {
+        if (!shooting) {
+            // Reset timer so shot fires immediately next time shooting starts
+            shotTimer = 0;
+            return;
+        }
+
+        if (shotTimer > 0) {
+            shotTimer -= deltaTimeMillis;
+        }
+
+        if (shotTimer <= 0) {
+            playerShoot();
+            shotTimer = shotCooldownMillis;
+        }
     }
 
     /** Called when game starts or restarts */
@@ -92,6 +120,8 @@ public class GameModel {
         speedMultiplier = 1.0;
         flashMillisRemaining = 0;
 
+        shooting = false;
+        shotTimer = 0;
 
         player.resetForNewGame(playWidth, playHeight);
 
@@ -110,6 +140,8 @@ public class GameModel {
 
         // wave intro logic isolated here
         if (handleWaveIntro(deltaTimeMillis)) return;
+
+        handleShooting(deltaTimeMillis);
 
         player.update(deltaTimeMillis);
 

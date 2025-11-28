@@ -102,7 +102,7 @@ public class Player extends Entity {
     }
 
     // Call this once from the view, with the canvas used in the game
-    public void initializeKeyBindings(Canvas canvas, Runnable onShoot) {
+    public void initializeKeyBindings(Canvas canvas, Runnable onShootStart, Runnable onShootStop) {
         canvas.setFocusTraversable(true);
 
         canvas.setOnKeyPressed(event -> {
@@ -112,9 +112,13 @@ public class Player extends Entity {
                 case RIGHT -> movingRight(true);
                 case UP -> movingUp(true);
                 case DOWN -> movingDown(true);
+                case A -> movingLeft(true);
+                case D -> movingRight(true);
+                case W -> movingUp(true);
+                case S -> movingDown(true);
                 case SPACE -> {
-                    if (onShoot != null) {
-                        onShoot.run();
+                    if (onShootStart != null) {
+                        onShootStart.run();
                     }
                 }
                 default -> {
@@ -129,6 +133,15 @@ public class Player extends Entity {
                 case RIGHT -> movingRight(false);
                 case UP -> movingUp(false);
                 case DOWN -> movingDown(false);
+                case A -> movingLeft(false);
+                case D -> movingRight(false);
+                case W -> movingUp(false);
+                case S -> movingDown(false);
+                case SPACE -> {
+                if (onShootStop != null) {
+                    onShootStop.run();
+                }
+            }
                 default -> {
                 }
             }

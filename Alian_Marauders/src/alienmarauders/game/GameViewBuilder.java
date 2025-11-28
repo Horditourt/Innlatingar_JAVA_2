@@ -74,7 +74,11 @@ public class GameViewBuilder {
 
         canvas.setFocusTraversable(true);
         canvas.requestFocus();
-        player.initializeKeyBindings(canvas, () -> model.playerShoot());
+        player.initializeKeyBindings(canvas,
+        () -> model.setShooting(true),
+        () -> model.setShooting(false)
+        );
+
 
         canvas.addEventHandler(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ENTER
