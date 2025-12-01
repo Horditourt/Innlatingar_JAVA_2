@@ -70,8 +70,33 @@ public class GameController {
         });
     }
 
+    /**
+     * Stops the game loop animation timer if it is currently running.
+     * This does not shut down background resources in the model, so the
+     * game can be started again later.
+     */
     public void stopGameLoop() {
-        gameLoop.stop();
+        if (gameLoop != null) {
+            gameLoop.stop();
+        }
+    }
+
+    /**
+     * Shuts down the game controller and its underlying model.
+     * <p>
+     * This method:
+     * <ul>
+     *   <li>Stops the game loop animation timer, if running.</li>
+     *   <li>Delegates to {@link GameModel#shutdown()} to terminate
+     *       the internal executor service used for concurrent collision
+     *       detection.</li>
+     * </ul>
+     * It should be called once when the application is being closed, and
+     * the controller will no longer be used afterwards.
+     */
+    public void shutdown() {
+        stopGameLoop();
+        model.shutdown();
     }
 
     public Region getView() {

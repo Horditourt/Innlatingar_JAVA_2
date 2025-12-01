@@ -27,4 +27,14 @@ public class SwitchController {
         return view.build();
     }
 
+    /**
+     * Returns the single {@link GameController} instance used by this
+     * switch controller.
+     *
+     * @return the game controller managing the Alien Marauders game
+     */
+    public GameController getGameController() {
+        return gameController;
+    }
+
 }
