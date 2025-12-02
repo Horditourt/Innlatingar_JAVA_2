@@ -32,7 +32,7 @@ public class MainMenuController {
 
     private void onChat() {
         switchModel.mainMenuActive.set(false);
-        switchModel.chatMenuActive.set(true);
+        switchModel.loginMenuActive.set(true);
     }
 
     private void onSettings() {

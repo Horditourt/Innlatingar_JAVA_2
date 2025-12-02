@@ -1,26 +1,43 @@
 package alienmarauders;
 
+import alienmarauders.game.GameController;
+import alienmarauders.menu.chatmenu.ChatMenuController;
+import alienmarauders.menu.loginmenu.LoginMenuController;
 import alienmarauders.menu.mainmenu.MainMenuController;
 import alienmarauders.menu.settingsmenu.SettingsMenuController;
 import javafx.scene.layout.Region;
-import alienmarauders.menu.chatmenu.ChatMenuController;
-import alienmarauders.game.GameController;
 
+/**
+ * Top-level controller that wires together the different menu controllers
+ * and provides the root view for the application.
+ */
 public class SwitchController {
     private final SwitchModel model;
     private final GameController gameController;
+    private final MainMenuController mainMenuController;
+    private final SettingsMenuController settingsMenuController;
+    private final ChatMenuController chatMenuController;
+    private final LoginMenuController loginMenuController;
     private final SwitchViewBuilder view;
 
     public SwitchController() {
         this.model = new SwitchModel();
         this.gameController = new GameController(model);
+
+        this.mainMenuController = new MainMenuController(model, gameController);
+        this.settingsMenuController = new SettingsMenuController(model);
+        this.chatMenuController = new ChatMenuController(model);
+        this.loginMenuController = new LoginMenuController(model, chatMenuController);
+
+        // Build the view switcher with all screens, including login
         this.view = new SwitchViewBuilder(
                 model,
-                new MainMenuController(model, gameController).getView(),
-                new SettingsMenuController(model).getView(),
-                new ChatMenuController(model).getView(),
-                gameController.getView());
-
+                mainMenuController.getView(),
+                settingsMenuController.getView(),
+                chatMenuController.getView(),
+                gameController.getView(),
+                loginMenuController.getView()
+        );
     }
 
     public Region getView() {
@@ -36,5 +53,4 @@ public class SwitchController {
     public GameController getGameController() {
         return gameController;
     }
-
 }
