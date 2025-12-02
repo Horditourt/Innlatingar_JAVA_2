@@ -19,6 +19,7 @@ public class ChatMenuController implements ChatClient.ChatListener {
     private final ChatMenuViewBuilder view;
 
     private ChatClient client;
+    private String username;
 
     /**
      * Creates a new controller for the chat menu.
@@ -54,6 +55,8 @@ public class ChatMenuController implements ChatClient.ChatListener {
      */
     public void attachClient(ChatClient client) {
         this.client = client;
+        this.username = client.getUsername();
+        model.setSelfUsername(username);
     }
 
     /**
@@ -81,78 +84,53 @@ public class ChatMenuController implements ChatClient.ChatListener {
         if (text == null || text.isBlank()) {
             return;
         }
-    
+
         if (client != null) {
             try {
                 client.sendChat(text);
             } catch (IOException e) {
-                view.appendMessage("*** Failed to send message: " + e.getMessage() + " ***");
+                view.appendSystemMessage("*** Failed to send message: " + e.getMessage() + " ***");
             }
         } else {
-            view.appendMessage("*** Not connected to server ***");
+            view.appendSystemMessage("*** Not connected to server ***");
         }
     }
 
-
     // ===== ChatClient.ChatListener implementation =====
 
-    /**
-     * Called when a new chat message is received from the server.
-     *
-     * @param message the received chat {@link Message}
-     */
     @Override
     public void onChatMessage(Message message) {
-        String from = message.getFrom() == null ? "Unknown" : message.getFrom();
-        String text = message.getText() == null ? "" : message.getText();
-        view.appendMessage(from + ": " + text);
+        String from = message.getFrom();
+        String text = message.getText();
+        boolean isSelf = (username != null && username.equals(from));
+        view.appendChatMessage(from, text, isSelf);
     }
 
-    /**
-     * Called when the server sends the complete list of current users.
-     *
-     * @param message the {@link Message} containing the user list
-     */
     @Override
     public void onUserList(Message message) {
         model.setUsers(message.getUsers());
     }
 
-    /**
-     * Called when a user joins the chat.
-     *
-     * @param message the {@link Message} describing the joining user
-     */
     @Override
     public void onUserJoined(Message message) {
-        String username = message.getFrom();
-        model.addUser(username);
-        view.appendMessage("* " + username + " joined the chat *");
+        String user = message.getFrom();
+        model.addUser(user);
+        view.appendSystemMessage("* " + user + " joined the chat *");
     }
 
-    /**
-     * Called when a user leaves the chat.
-     *
-     * @param message the {@link Message} describing the departing user
-     */
     @Override
     public void onUserLeft(Message message) {
-        String username = message.getFrom();
-        model.removeUser(username);
-        view.appendMessage("* " + username + " left the chat *");
+        String user = message.getFrom();
+        model.removeUser(user);
+        view.appendSystemMessage("* " + user + " left the chat *");
     }
 
-    /**
-     * Called when the connection to the server is closed or lost.
-     *
-     * @param cause the underlying exception, or {@code null} if closed normally
-     */
     @Override
     public void onConnectionClosed(Exception cause) {
         if (cause != null) {
-            view.appendMessage("*** Disconnected from server: " + cause.getMessage() + " ***");
+            view.appendSystemMessage("*** Disconnected from server: " + cause.getMessage() + " ***");
         } else {
-            view.appendMessage("*** Disconnected from server ***");
+            view.appendSystemMessage("*** Disconnected from server ***");
         }
     }
 }

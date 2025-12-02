@@ -218,4 +218,14 @@ public class ChatClient {
             }
         }
     }
+
+    /**
+     * Returns the username associated with this client.
+     *
+     * @return the username used when logging in
+     */
+    public String getUsername() {
+        return username;
+    }
+
 }

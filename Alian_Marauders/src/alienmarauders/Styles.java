@@ -59,4 +59,24 @@ public final class Styles {
                 """;
     }
 
+    /** Style for the current user's entry in the user list. */
+    public static final String CHAT_USER_SELF_CELL_STYLE =
+            "-fx-text-fill: deepskyblue; -fx-font-weight: bold;";
+
+    /** Style for other users in the user list. */
+    public static final String CHAT_USER_OTHER_CELL_STYLE =
+            "-fx-text-fill: red;";
+
+    /** Style for chat messages sent by this client (Text in TextFlow). */
+    public static final String CHAT_MESSAGE_SELF_STYLE =
+            "-fx-fill: deepskyblue;";
+
+    /** Style for chat messages sent by other users (Text in TextFlow). */
+    public static final String CHAT_MESSAGE_OTHER_STYLE =
+            "-fx-fill: red;";
+
+    /** Style for system messages (join/leave, errors). */
+    public static final String CHAT_MESSAGE_SYSTEM_STYLE =
+            "-fx-fill: gray; -fx-font-style: italic;";
+
 }

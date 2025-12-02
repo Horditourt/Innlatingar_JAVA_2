@@ -1,4 +1,3 @@
-// src/alienmarauders/menu/mainmenu/MainMenuViewBuilder.java
 package alienmarauders.menu.mainmenu;
 
 import alienmarauders.SwitchModel;

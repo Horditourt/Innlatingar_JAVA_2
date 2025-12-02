@@ -2,13 +2,16 @@ package alienmarauders.menu.chatmenu;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 import java.util.List;
 
 /**
  * Model for the chat menu.
  * <p>
- * Holds the observable list of online users which is bound to the chat GUI.
+ * Holds the observable list of online users and the username of the
+ * currently logged-in client.
  */
 public class ChatMenuModel {
 
@@ -17,6 +20,8 @@ public class ChatMenuModel {
      */
     public final ObservableList<String> users =
             FXCollections.observableArrayList();
+
+    private final StringProperty selfUsername = new SimpleStringProperty();
 
     /**
      * Replaces the current list of users with a new list.
@@ -54,5 +59,32 @@ public class ChatMenuModel {
             return;
         }
         users.remove(username);
+    }
+
+    /**
+     * Sets the username of the current client.
+     *
+     * @param username the local client's username
+     */
+    public void setSelfUsername(String username) {
+        selfUsername.set(username);
+    }
+
+    /**
+     * Returns the username of the current client.
+     *
+     * @return the local client's username, or {@code null}
+     */
+    public String getSelfUsername() {
+        return selfUsername.get();
+    }
+
+    /**
+     * Returns the property storing the local client's username.
+     *
+     * @return the {@link StringProperty} for the self username
+     */
+    public StringProperty selfUsernameProperty() {
+        return selfUsername;
     }
 }

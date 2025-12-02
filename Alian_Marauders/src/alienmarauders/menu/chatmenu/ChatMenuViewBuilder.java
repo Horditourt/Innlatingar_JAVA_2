@@ -1,4 +1,3 @@
-// src/alienmarauders/menu/chatmenu/ChatMenuViewBuilder.java
 package alienmarauders.menu.chatmenu;
 
 import alienmarauders.Styles;
@@ -7,36 +6,37 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 
 import java.util.function.Consumer;
 
 /**
  * Builds the chat menu view shown inside the Alien Marauders game.
  * <p>
- * The view exposes a callback for sending chat messages and provides a
- * convenience method for appending new messages to the message area.
+ * Uses a {@link TextFlow} to display richly styled chat messages and a
+ * {@link ListView} to show all online users.
  */
 public class ChatMenuViewBuilder {
 
     private final ChatMenuModel model;
-    private final Runnable goMain;
     private final SwitchModel switchModel;
+    private final Runnable goMain;
     private final Consumer<String> onSend;
 
     private final BorderPane root = new BorderPane();
 
-    // We keep references so the controller can append messages, etc.
-    private TextArea messages;
+    private TextFlow messagesFlow;
+    private ScrollPane messagesScroll;
 
     /**
      * Creates a new builder for the chat menu view.
      *
-     * @param model      the chat model providing the list of users
+     * @param model       the chat model providing the list of users
      * @param switchModel the global switch model for background binding
-     * @param goMain     callback invoked when the "Main menu" button is clicked
-     * @param onSend     callback that will be invoked when the user presses "Send"
-     *                   with the text entered in the input field
+     * @param goMain      callback invoked when the "Main menu" button is clicked
+     * @param onSend      callback that will be invoked when the user presses "Send"
+     *                    with the text entered in the input field
      */
     public ChatMenuViewBuilder(ChatMenuModel model,
                                SwitchModel switchModel,
@@ -54,13 +54,41 @@ public class ChatMenuViewBuilder {
      * @return the root {@link Region} containing the chat UI
      */
     public Region build() {
+        // === Left: users list ===
         ListView<String> users = new ListView<>(model.users);
         users.setPrefWidth(180);
 
-        messages = new TextArea();
-        messages.setEditable(false);
-        messages.setWrapText(true);
+        // Color self username differently using Styles constants
+        users.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
+                setText(item);
 
+                String self = model.getSelfUsername();
+                if (self != null && self.equals(item)) {
+                    setStyle(Styles.CHAT_USER_SELF_CELL_STYLE);
+                } else {
+                    setStyle(Styles.CHAT_USER_OTHER_CELL_STYLE);
+                }
+            }
+        });
+
+        // === Center: chat messages in TextFlow (inside ScrollPane) ===
+        messagesFlow = new TextFlow();
+        messagesFlow.setPadding(new Insets(8));
+
+        messagesScroll = new ScrollPane(messagesFlow);
+        messagesScroll.setFitToWidth(true);
+        messagesScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        messagesScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        // === Bottom: input + buttons ===
         TextField input = new TextField();
         input.setPromptText("Type a message.");
         Button send = new Button("Send");
@@ -82,34 +110,69 @@ public class ChatMenuViewBuilder {
         bottom.setPadding(new Insets(8));
         HBox.setHgrow(input, Priority.ALWAYS);
 
+        // === Top header ===
         Label header = new Label("Chat room");
-        header.setFont(Font.font(18));
+        header.setPadding(new Insets(8));
         HBox top = new HBox(header);
-        top.setPadding(new Insets(10));
         top.setAlignment(Pos.CENTER);
 
         root.setTop(top);
         root.setLeft(users);
-        root.setCenter(messages);
+        root.setCenter(messagesScroll);
         root.setBottom(bottom);
 
         // Background bound to model
         root.styleProperty().bind(Styles.backgroundStyle(switchModel.backgroundName, this));
+
         return root;
     }
 
     /**
-     * Appends a single line to the message area.
+     * Appends a chat message to the message area.
      *
-     * @param line the line of text to append; {@code null} is ignored
+     * @param from   the sender username
+     * @param text   the message body
+     * @param isSelf {@code true} if this client sent the message
      */
-    public void appendMessage(String line) {
-        if (messages == null || line == null) {
+    public void appendChatMessage(String from, String text, boolean isSelf) {
+        if (from == null) {
+            from = "Unknown";
+        }
+        if (text == null) {
+            text = "";
+        }
+
+        Text line = new Text(from + ": " + text + "\n");
+        line.setStyle(isSelf
+                ? Styles.CHAT_MESSAGE_SELF_STYLE
+                : Styles.CHAT_MESSAGE_OTHER_STYLE);
+
+        messagesFlow.getChildren().add(line);
+        scrollToBottom();
+    }
+
+    /**
+     * Appends a system-style message (e.g. join/leave notifications).
+     *
+     * @param text the system message to append
+     */
+    public void appendSystemMessage(String text) {
+        if (text == null || text.isBlank()) {
             return;
         }
-        if (!messages.getText().isEmpty() && !messages.getText().endsWith("\n")) {
-            messages.appendText("\n");
+        Text line = new Text(text + "\n");
+        line.setStyle(Styles.CHAT_MESSAGE_SYSTEM_STYLE);
+        messagesFlow.getChildren().add(line);
+        scrollToBottom();
+    }
+
+    /**
+     * Scrolls the message area to the bottom so the latest message is visible.
+     */
+    private void scrollToBottom() {
+        if (messagesScroll != null) {
+            messagesScroll.layout();
+            messagesScroll.setVvalue(1.0);
         }
-        messages.appendText(line + "\n");
     }
 }
