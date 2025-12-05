@@ -30,7 +30,7 @@ public class LoginMenuController {
                                ChatMenuController chatMenuController) {
         this.switchModel = switchModel;
         this.chatMenuController = chatMenuController;
-        this.view = new LoginMenuViewBuilder();
+        this.view = new LoginMenuViewBuilder(switchModel);
         hookEvents();
     }
 

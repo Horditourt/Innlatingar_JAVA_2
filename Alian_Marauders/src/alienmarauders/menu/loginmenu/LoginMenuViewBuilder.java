@@ -1,5 +1,7 @@
 package alienmarauders.menu.loginmenu;
 
+import alienmarauders.Styles;
+import alienmarauders.SwitchModel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -16,12 +18,17 @@ import javafx.scene.layout.VBox;
 public class LoginMenuViewBuilder {
 
     private final BorderPane root = new BorderPane();
+    private final SwitchModel switchModel;
 
     private final TextField usernameField = new TextField();
-    private final TextField hostField = new TextField();
-    private final TextField portField = new TextField();
+    private final TextField hostField = new TextField(String.valueOf("localhost"));
+    private final TextField portField = new TextField(String.valueOf(8888));
     private final Button connectButton = new Button("Connect");
-    private final Button cancelButton = new Button("Cancel");
+    private final Button cancelButton = new Button("Main menu");
+
+    public LoginMenuViewBuilder(SwitchModel switchModel) {
+        this.switchModel = switchModel;
+    }
 
     /**
      * Builds and returns the root region of the login menu.
@@ -47,6 +54,9 @@ public class LoginMenuViewBuilder {
         mainBox.setAlignment(Pos.CENTER);
 
         root.setCenter(mainBox);
+
+        root.styleProperty().bind(Styles.backgroundStyle(switchModel.backgroundName, this));
+
         return root;
     }
 
