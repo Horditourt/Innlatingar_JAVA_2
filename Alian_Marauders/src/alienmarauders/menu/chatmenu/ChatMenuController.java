@@ -133,4 +133,10 @@ public class ChatMenuController implements ChatClient.ChatListener {
             view.appendSystemMessage("*** Disconnected from server ***");
         }
     }
+
+    @Override
+    public void onLoginRejected(Message message) {
+        // Login is handled in LoginMenuController, so this should not be called.
+        // We implement it only to satisfy the interface.
+    }
 }

@@ -102,6 +102,22 @@ public class Server {
         clients.remove(handler);
     }
 
+        /**
+     * Returns whether the given username is already in use by another client.
+     *
+     * @param name the username to check
+     * @return {@code true} if another connected client already uses this name
+     */
+    private boolean isUsernameTaken(String name) {
+        if (name == null) {
+            return false;
+        }
+        return clients.stream()
+                .map(ClientHandler::getUsername)
+                .anyMatch(u -> name.equals(u));
+    }
+
+
     /**
      * Handles a single client connection in its own thread.
      */
@@ -148,6 +164,15 @@ public class Server {
                     close();
                     return;
                 }
+                
+                String requested = first.getFrom();
+
+                if (isUsernameTaken(requested)) {
+                System.out.println("Login rejected for '" + requested + "': name already in use");
+                sendAsync(Message.loginRejected("Username '" + requested + "' is already in use."));
+                close();
+                return;
+            }
 
                 this.username = first.getFrom();
                 System.out.println("User '" + username + "' logged in.");

@@ -50,6 +50,13 @@ public class ChatClient {
         void onUserLeft(Message message);
 
         /**
+         * Called when a login attempt has been rejected by the server.
+         *
+         * @param message the {@link Message} describing the login error
+         */
+        void onLoginRejected(Message message);
+
+        /**
          * Called when the connection is closed or lost.
          *
          * @param cause the exception that caused the disconnection, or {@code null}
@@ -60,7 +67,7 @@ public class ChatClient {
     private final String host;
     private final int port;
     private final String username;
-    private final ChatListener listener;
+    private ChatListener listener;
 
     private Socket socket;
     private ObjectOutputStream out;
@@ -213,10 +220,20 @@ public class ChatClient {
             case USER_LIST -> listener.onUserList(message);
             case USER_JOINED -> listener.onUserJoined(message);
             case USER_LEFT -> listener.onUserLeft(message);
+            case LOGIN_REJECTED -> listener.onLoginRejected(message);
             default -> {
                 // LOGIN from server side should not normally occur here
             }
         }
+    }
+
+    /**
+     * Updates the listener that receives events from this client.
+     *
+     * @param listener the new {@link ChatListener}, or {@code null} to disable callbacks
+     */
+    public void setListener(ChatListener listener) {
+        this.listener = listener;
     }
 
     /**

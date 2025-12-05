@@ -46,7 +46,10 @@ public class Message implements Serializable {
         /**
          * A notification that a user has left the chat (logged out / disconnected).
          */
-        USER_LEFT
+        USER_LEFT,
+
+        /** A login was rejected by the server (e.g. duplicate username). */
+        LOGIN_REJECTED
     }
 
     private final Type type;
@@ -124,6 +127,16 @@ public class Message implements Serializable {
      */
     public static Message userLeft(String username) {
         return new Message(Type.USER_LEFT, username, null, null, Instant.now());
+    }
+
+    /**
+     * Creates a message indicating that a login attempt has been rejected.
+     *
+     * @param reason human-readable explanation of why the login failed
+     * @return a {@link Message} of type {@link Type#LOGIN_REJECTED}
+     */
+    public static Message loginRejected(String reason) {
+        return new Message(Type.LOGIN_REJECTED, null, reason, null, Instant.now());
     }
 
     /**
