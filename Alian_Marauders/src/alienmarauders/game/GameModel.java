@@ -11,6 +11,11 @@ import java.util.concurrent.Future;
 import alienmarauders.game.entities.*;
 import alienmarauders.game.movement.*;
 import alienmarauders.game.formation.*;
+import alienmarauders.game.graphics.Animatable;
+import alienmarauders.game.graphics.AnimationContainer;
+import alienmarauders.game.graphics.ExplosionAnimation;
+import alienmarauders.game.graphics.HitSparkAnimation;
+import alienmarauders.game.graphics.ShotFlashAnimation;
 import javafx.scene.image.Image;
 
 /**
@@ -55,6 +60,35 @@ public class GameModel {
             2,  // Green
             2   // Red
     };
+
+    // Sprite used for the actual player shots
+    private final Image laserShotImage =
+            new Image("/alienmarauders/images/Laser.png");
+
+    // Muzzle-flash sprite sheet (3 frames in a horizontal row)
+    private final Image muzzleFlashSheet =
+            new Image("/alienmarauders/images/muzzle_flash.png");
+
+    private static final int MUZZLE_FLASH_FRAMES = 3;
+
+        // Hit spark sprite sheet (small blood-like explosion)
+    private final Image hitSparkSheet =
+            new Image("/alienmarauders/images/blood_small.png");
+
+    // Number of frames in blood_small.png (horizontal sheet)
+    private static final int HIT_SPARK_FRAMES = 6;
+
+
+    // Explosion sprite sheet (short-lived death animation)
+    private final Image explosionSheet =
+            new Image("/alienmarauders/images/Explosion.png");
+
+    // Number of frames in Explosion.png (horizontal sprite sheet)
+    private static final int EXPLOSION_FRAMES = 8;
+
+    // Container for short-lived animations (e.g., explosions)
+    private final AnimationContainer<Animatable> animations = 
+            new AnimationContainer<>();
 
     private double playWidth = 800;
     private double playHeight = 600;
@@ -102,9 +136,11 @@ public class GameModel {
     public boolean isFlashRed() { return flashMillisRemaining > 0; }
     public boolean isWaveBannerActive() { return waveMillisRemaining > 0; }
     public String getWaveText() { return waveText; }
+    public AnimationContainer<Animatable> getAnimations() { return animations; }
 
     /**
-     * Spawns a single player shot at the top-center of the player sprite.
+     * Spawns a single player shot at the top-center of the player sprite
+     * and adds a short muzzle-flash animation at the gun barrel.
      */
     public void playerShoot() {
         double shotWidth = 5;
@@ -117,8 +153,13 @@ public class GameModel {
         double shotX = px + pWidth / 2 - shotWidth / 2;
         double shotY = py - shotHeight;
 
-        shots.add(new Shot(shotX, shotY, shotWidth, shotHeight, null));
+        // Use Laser.png for the actual shot sprite
+        shots.add(new Shot(shotX, shotY, shotWidth, shotHeight, laserShotImage));
+
+        // Add muzzle flash at the barrel when the shot is fired
+        addShotMuzzleFlash(shotX, shotY, shotWidth, shotHeight);
     }
+
 
     /**
      * Enables or disables continuous shooting. Typically called from the
@@ -151,6 +192,97 @@ public class GameModel {
             playerShoot();
             shotTimer = shotCooldownMillis;
         }
+    }
+
+    /**
+     * Adds a short muzzle-flash animation at the position where a new
+     * player shot has just been spawned.
+     *
+     * @param shotX      the x coordinate of the newly spawned shot
+     * @param shotY      the y coordinate of the newly spawned shot
+     * @param shotWidth  the width of the newly spawned shot
+     * @param shotHeight the height of the newly spawned shot
+     */
+    private void addShotMuzzleFlash(double shotX,
+                                    double shotY,
+                                    double shotWidth,
+                                    double shotHeight) {
+        // Size the flash somewhat larger than the shot itself
+        double flashWidth = shotWidth * 6.0;
+        double flashHeight = shotHeight * 4.5;
+
+        // Center flash around the shot spawn point
+        double fx = shotX + (shotWidth - flashWidth) / 2.0;
+        double fy = shotY + (shotHeight - flashHeight) / 2.0 + 2.0; 
+
+        ShotFlashAnimation flash = new ShotFlashAnimation(
+                fx,
+                fy,
+                flashWidth,
+                flashHeight,
+                muzzleFlashSheet,
+                MUZZLE_FLASH_FRAMES,
+                50.0 // ms per frame → quick muzzle flash
+        );
+
+        animations.addAnimation(flash);
+    }
+
+
+    /**
+     * Creates a hit spark animation when a shot hits an enemy.
+     * <p>
+     * The spark is positioned roughly at the center of the enemy sprite and
+     * uses the blood_small.png sprite sheet to play a short non-looping
+     * animation.
+     *
+     * @param enemy the enemy that was hit by a shot
+     */
+    private void addEnemyHitSpark(Enemy enemy) {
+        // make spark extend vertically more than horizontally, so it looks like a splatter
+        double sparkWidth = enemy.getWidth() * 0.7;
+        double sparkHeight = enemy.getHeight() * 4.0;
+
+        double sparkX = enemy.getPositionX() + (enemy.getWidth() - sparkWidth) / 2.0;
+        double sparkY = enemy.getPositionY() + (enemy.getHeight() - sparkHeight) / 2.0;
+
+        HitSparkAnimation spark = new HitSparkAnimation(
+                sparkX,
+                sparkY,
+                sparkWidth,
+                sparkHeight,
+                hitSparkSheet,
+                HIT_SPARK_FRAMES,
+                40.0 // ms per frame → fairly quick hit effect
+        );
+
+        animations.addAnimation(spark);
+    }
+
+    /**
+     * Adds an explosion animation for a given enemy to the animation
+     * container. The explosion is positioned at the enemy's current
+     * location and uses the enemy's width and height.
+     *
+     * @param enemy the enemy that has just died
+     */
+    private void addExplosionForEnemy(Enemy enemy) {
+        double ex = enemy.getPositionX();
+        double ey = enemy.getPositionY();
+        double ew = enemy.getWidth();
+        double eh = enemy.getHeight();
+
+        ExplosionAnimation explosion = new ExplosionAnimation(
+                ex,
+                ey,
+                ew,
+                eh,
+                explosionSheet,
+                EXPLOSION_FRAMES,
+                60.0 // ms per frame; tweak for desired speed
+        );
+
+        animations.addAnimation(explosion);
     }
 
     /**
@@ -208,7 +340,7 @@ public class GameModel {
         // wave intro logic isolated here
         if (handleWaveIntro(deltaTimeMillis)) return;
 
-        handleShooting(deltaTimeMillis);
+        handleShooting(deltaTimeMillis * 2);
 
         player.update(deltaTimeMillis);
 
@@ -334,8 +466,12 @@ public class GameModel {
                 shot.kill();
                 enemy.takeDamage(1);
 
+                // Small hit spark at the hit location
+                addEnemyHitSpark(enemy);
+
                 if (!enemy.isAlive()) {
                     score.updateScore(100);
+                    addExplosionForEnemy(enemy);
                 }
             }
         } catch (InterruptedException ie) {

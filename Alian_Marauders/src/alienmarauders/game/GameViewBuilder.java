@@ -5,6 +5,8 @@ import alienmarauders.Styles;
 import alienmarauders.game.entities.Enemy;
 import alienmarauders.game.entities.Player;
 import alienmarauders.game.entities.Shot;
+import alienmarauders.game.graphics.AnimationContainer;
+import alienmarauders.game.graphics.Animatable;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -127,6 +129,12 @@ public class GameViewBuilder {
                 e.render(gc);
             for (Shot s : model.getShots())
                 s.render(gc);
+        }
+
+        // Render short-lived animations (e.g. explosions) on top
+        AnimationContainer<Animatable> animationContainer = model.getAnimations();
+        if (animationContainer != null && !animationContainer.isEmpty()) {
+            animationContainer.renderAnimations(gc);
         }
 
         // flash overlay

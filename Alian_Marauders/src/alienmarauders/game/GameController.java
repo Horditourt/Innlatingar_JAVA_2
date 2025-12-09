@@ -1,4 +1,3 @@
-// src/alienmarauders/game/GameController.java
 package alienmarauders.game;
 
 import alienmarauders.SwitchModel;
