@@ -3,6 +3,13 @@
     [
         {
             "type": "java",
+            "name": "SimpleAnimationDemo",
+            "request": "launch",
+            "mainClass": "SimpleAnimationDemo",
+            "projectName": "Alian_Marauders_7abcc117"
+        },
+        {
+            "type": "java",
             "name": "ServerApp",
             "request": "launch",
             "mainClass": "server.ServerApp",

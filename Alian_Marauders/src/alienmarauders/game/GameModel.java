@@ -211,7 +211,7 @@ public class GameModel {
         double flashWidth = shotWidth * 6.0;
         double flashHeight = shotHeight * 4.5;
 
-        // Center flash around the shot spawn point
+        // Center flash around the shot spawn point/barrel
         double fx = shotX + (shotWidth - flashWidth) / 2.0;
         double fy = shotY + (shotHeight - flashHeight) / 2.0 + 2.0; 
 
@@ -253,7 +253,7 @@ public class GameModel {
                 sparkHeight,
                 hitSparkSheet,
                 HIT_SPARK_FRAMES,
-                40.0 // ms per frame → fairly quick hit effect
+                60.0 // ms per frame → fairly quick hit effect
         );
 
         animations.addAnimation(spark);
