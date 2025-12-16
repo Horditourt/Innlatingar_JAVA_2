@@ -2,6 +2,7 @@ package alienmarauders.networking;
 
 import javafx.application.Platform;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -13,226 +14,40 @@ import java.net.Socket;
  * Connects to the chat server, sends {@link Message} instances and listens
  * for incoming messages in a background thread.
  */
-public class ChatClient {
-
-    /**
-     * Listener interface used to deliver events from the networking layer
-     * to the JavaFX UI / model layer.
-     */
-    public interface ChatListener {
-
-        /**
-         * Called when a new chat message has been received from the server.
-         *
-         * @param message the received chat {@link Message}
-         */
-        void onChatMessage(Message message);
-
-        /**
-         * Called when the server sends a complete list of all currently online users.
-         *
-         * @param message the {@link Message} containing the user list
-         */
-        void onUserList(Message message);
-
-        /**
-         * Called when a user joins the chat.
-         *
-         * @param message the {@link Message} describing the joining user
-         */
-        void onUserJoined(Message message);
-
-        /**
-         * Called when a user leaves the chat.
-         *
-         * @param message the {@link Message} describing the departing user
-         */
-        void onUserLeft(Message message);
-
-        /**
-         * Called when a login attempt has been rejected by the server.
-         *
-         * @param message the {@link Message} describing the login error
-         */
-        void onLoginRejected(Message message);
-
-        /**
-         * Called when the connection is closed or lost.
-         *
-         * @param cause the exception that caused the disconnection, or {@code null}
-         */
-        void onConnectionClosed(Exception cause);
-    }
+public class ChatClient implements Closeable {
 
     private final String host;
     private final int port;
     private final String username;
-    private ChatListener listener;
 
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
-    private Thread listenerThread;
+
     private volatile boolean running;
 
+    private ChatClientListener listener;
+
     /**
-     * Creates a new chat client.
+     * Creates a new chat client that will connect to the given host/port and
+     * attempt to login with the provided username.
      *
-     * @param host     the server hostname or IP address
-     * @param port     the server TCP port
-     * @param username the username to use when logging in
-     * @param listener the {@link ChatListener} that will receive events
+     * @param host     server host name or IP
+     * @param port     server port
+     * @param username desired username
      */
-    public ChatClient(String host, int port, String username, ChatListener listener) {
+    public ChatClient(String host, int port, String username) {
         this.host = host;
         this.port = port;
         this.username = username;
-        this.listener = listener;
     }
 
     /**
-     * Connects to the chat server and sends the initial login message.
-     * <p>
-     * This method performs blocking I/O and should not be called on the JavaFX
-     * application thread.
+     * Sets the listener for receiving callbacks from this client.
      *
-     * @throws IOException if the connection could not be established
+     * @param listener the listener, or {@code null} to disable callbacks
      */
-    public void connect() throws IOException {
-        socket = new Socket(host, port);
-
-        // Same stream ordering as server
-        out = new ObjectOutputStream(socket.getOutputStream());
-        out.flush();
-        in = new ObjectInputStream(socket.getInputStream());
-
-        // Send LOGIN
-        sendMessage(Message.login(username));
-
-        running = true;
-        listenerThread = new Thread(this::listenLoop, "ChatClient-Listener");
-        listenerThread.setDaemon(true);
-        listenerThread.start();
-    }
-
-    /**
-     * Sends a plain text chat message to the server.
-     *
-     * @param text the chat message text
-     * @throws IOException if sending fails
-     */
-    public void sendChat(String text) throws IOException {
-        if (text == null || text.isBlank()) {
-            return;
-        }
-        sendMessage(Message.chat(username, text));
-    }
-
-    /**
-     * Disconnects from the server and stops the listener thread.
-     */
-    public void disconnect() {
-        running = false;
-        try {
-            if (socket != null && !socket.isClosed()) {
-                socket.close();
-            }
-        } catch (IOException ignored) {
-        }
-    }
-
-    /**
-     * Internal helper to send a {@link Message} to the server.
-     *
-     * @param message the {@link Message} to send
-     * @throws IOException if an I/O error occurs
-     */
-    private void sendMessage(Message message) throws IOException {
-        if (out == null || message == null) {
-            return;
-        }
-        synchronized (out) {
-            out.writeObject(message);
-            out.flush();
-        }
-    }
-
-    /**
-     * Background loop that continuously listens for incoming messages from the server.
-     * <p>
-     * Every received {@link Message} is dispatched to the configured {@link ChatListener}
-     * on the JavaFX application thread using {@link Platform#runLater(Runnable)}.
-     */
-    private void listenLoop() {
-        Exception closeCause = null;
-        try {
-            while (running && !socket.isClosed()) {
-                Object obj = in.readObject();
-                if (!(obj instanceof Message message)) {
-                    continue;
-                }
-
-                // Ensure UI updates happen on JavaFX thread
-                Platform.runLater(() -> dispatchMessage(message));
-            }
-        } catch (Exception e) {
-            closeCause = e;
-        } finally {
-            running = false;
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException ignored) {
-            }
-            try {
-                if (out != null) {
-                    out.close();
-                }
-            } catch (IOException ignored) {
-            }
-            try {
-                if (socket != null && !socket.isClosed()) {
-                    socket.close();
-                }
-            } catch (IOException ignored) {
-            }
-
-            if (listener != null) {
-                Exception finalCause = closeCause;
-                Platform.runLater(() -> listener.onConnectionClosed(finalCause));
-            }
-        }
-    }
-
-    /**
-     * Dispatches a received {@link Message} to the appropriate listener callback.
-     *
-     * @param message the message to dispatch
-     */
-    private void dispatchMessage(Message message) {
-        if (listener == null || message == null) {
-            return;
-        }
-
-        switch (message.getType()) {
-            case CHAT -> listener.onChatMessage(message);
-            case USER_LIST -> listener.onUserList(message);
-            case USER_JOINED -> listener.onUserJoined(message);
-            case USER_LEFT -> listener.onUserLeft(message);
-            case LOGIN_REJECTED -> listener.onLoginRejected(message);
-            default -> {
-                // LOGIN from server side should not normally occur here
-            }
-        }
-    }
-
-    /**
-     * Updates the listener that receives events from this client.
-     *
-     * @param listener the new {@link ChatListener}, or {@code null} to disable callbacks
-     */
-    public void setListener(ChatListener listener) {
+    public void setListener(ChatClientListener listener) {
         this.listener = listener;
     }
 
@@ -245,4 +60,143 @@ public class ChatClient {
         return username;
     }
 
+    /**
+     * Connects to the server and starts the background receive loop.
+     *
+     * @throws IOException if the connection could not be established
+     */
+    public void connect() throws IOException {
+        socket = new Socket(host, port);
+        out = new ObjectOutputStream(socket.getOutputStream());
+        in = new ObjectInputStream(socket.getInputStream());
+
+        // Send login request immediately
+        send(MessageFactory.login(username));
+
+        running = true;
+        Thread receiver = new Thread(this::receiveLoop, "ChatClient-Receiver");
+        receiver.setDaemon(true);
+        receiver.start();
+    }
+
+    /**
+     * Sends a chat message to the server.
+     *
+     * @param text the chat text to send
+     * @throws IOException if writing to the socket fails
+     */
+    public void sendChat(String text) throws IOException {
+        send(MessageFactory.chat(username, text));
+    }
+
+    /**
+     * Sends a raw protocol message to the server.
+     *
+     * @param message the message to send
+     * @throws IOException if writing to the socket fails
+     */
+    public synchronized void send(Message message) throws IOException {
+        if (out == null) {
+            throw new IOException("Not connected");
+        }
+        out.writeObject(message);
+        out.flush();
+    }
+
+    private void receiveLoop() {
+        Exception closeCause = null;
+        try {
+            while (running) {
+                Object obj = in.readObject();
+                if (!(obj instanceof Message message)) {
+                    continue;
+                }
+                dispatch(message);
+            }
+        } catch (Exception ex) {
+            closeCause = ex;
+        } finally {
+            running = false;
+            try {
+                close();
+            } catch (IOException ignored) {
+            }
+            fireConnectionClosed(closeCause);
+        }
+    }
+
+    private void dispatch(Message message) {
+        ChatClientListener l = this.listener;
+        if (l == null) {
+            return;
+        }
+
+        // Always deliver on JavaFX thread
+        Platform.runLater(() -> {
+            switch (message.getType()) {
+                case CHAT -> l.onChatMessage(message);
+                case USER_LIST -> l.onUserList(message);
+                case USER_JOINED -> l.onUserJoined(message);
+                case USER_LEFT -> l.onUserLeft(message);
+                case LOGIN_REJECTED -> l.onLoginRejected(message);
+                default -> {
+                    // ignore
+                }
+            }
+        });
+    }
+
+    private void fireConnectionClosed(Exception cause) {
+        ChatClientListener l = this.listener;
+        if (l == null) {
+            return;
+        }
+        Platform.runLater(() -> l.onConnectionClosed(cause));
+    }
+
+    /**
+     * Closes the connection and stops the receive loop.
+     *
+     * @throws IOException if closing resources fails
+     */
+    @Override
+    public void close() throws IOException {
+        running = false;
+
+        IOException first = null;
+
+        if (in != null) {
+            try {
+                in.close();
+            } catch (IOException ex) {
+                first = ex;
+            } finally {
+                in = null;
+            }
+        }
+
+        if (out != null) {
+            try {
+                out.close();
+            } catch (IOException ex) {
+                if (first == null) first = ex;
+            } finally {
+                out = null;
+            }
+        }
+
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException ex) {
+                if (first == null) first = ex;
+            } finally {
+                socket = null;
+            }
+        }
+
+        if (first != null) {
+            throw first;
+        }
+    }
 }

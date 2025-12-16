@@ -19,6 +19,9 @@ public class SwitchViewBuilder {
     private final Region gameView;
     private final Region loginMenuView;
 
+    private StackPane root;
+    private boolean built = false;
+
     /**
      * Creates a new switch view builder with all application screens.
      *
@@ -46,12 +49,17 @@ public class SwitchViewBuilder {
     }
 
     /**
-     * Builds and returns the root StackPane that contains all screens.
+     * Builds (once) and returns the root StackPane that contains all screens.
      *
      * @return the root {@link Region} containing all views
      */
     public Region build() {
-        StackPane root = new StackPane();
+        if (built) {
+            return root;
+        }
+        built = true;
+
+        root = new StackPane();
 
         // Only active view is visible + managed
         bindVisibleManaged(mainMenuView, model.mainMenuActive);
@@ -61,14 +69,15 @@ public class SwitchViewBuilder {
         bindVisibleManaged(loginMenuView, model.loginMenuActive);
 
         // Force every view to fill the window
-        for (Region r : new Region[]{mainMenuView, settingsMenuView, chatMenuView, gameView, loginMenuView}) {
+        Region[] views = new Region[]{mainMenuView, settingsMenuView, chatMenuView, gameView, loginMenuView};
+        for (Region r : views) {
             r.setMinSize(0, 0);
             r.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
             r.prefWidthProperty().bind(root.widthProperty());
             r.prefHeightProperty().bind(root.heightProperty());
         }
 
-        root.getChildren().addAll(mainMenuView, settingsMenuView, chatMenuView, gameView, loginMenuView);
+        root.getChildren().addAll(views);
         return root;
     }
 

@@ -12,14 +12,20 @@ import javafx.scene.layout.Region;
  * and provides the root view for the application.
  */
 public class SwitchController {
+
     private final SwitchModel model;
     private final GameController gameController;
     private final MainMenuController mainMenuController;
     private final SettingsMenuController settingsMenuController;
     private final ChatMenuController chatMenuController;
     private final LoginMenuController loginMenuController;
-    private final SwitchViewBuilder view;
 
+    private final SwitchViewBuilder viewBuilder;
+    private final Region root;
+
+    /**
+     * Creates the application controller and wires all screens into a single switch view.
+     */
     public SwitchController() {
         this.model = new SwitchModel();
         this.gameController = new GameController(model);
@@ -29,8 +35,7 @@ public class SwitchController {
         this.chatMenuController = new ChatMenuController(model);
         this.loginMenuController = new LoginMenuController(model, chatMenuController);
 
-        // Build the view switcher with all screens, including login
-        this.view = new SwitchViewBuilder(
+        this.viewBuilder = new SwitchViewBuilder(
                 model,
                 mainMenuController.getView(),
                 settingsMenuController.getView(),
@@ -38,10 +43,17 @@ public class SwitchController {
                 gameController.getView(),
                 loginMenuController.getView()
         );
+
+        this.root = viewBuilder.build(); // build once (no UI rebuild surprises)
     }
 
+    /**
+     * Returns the root view for the application.
+     *
+     * @return the cached root view
+     */
     public Region getView() {
-        return view.build();
+        return root;
     }
 
     /**

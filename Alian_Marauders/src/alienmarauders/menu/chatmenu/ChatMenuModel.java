@@ -1,79 +1,68 @@
 package alienmarauders.menu.chatmenu;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.util.List;
 
 /**
  * Model for the chat menu.
  * <p>
- * Holds the observable list of online users and the username of the
- * currently logged-in client.
+ * Holds observable UI state such as online users, the local username and the
+ * list of chat lines. The view binds to this model.
  */
 public class ChatMenuModel {
 
-    /**
-     * Observable list of usernames currently shown in the chat user list.
-     */
-    public final ObservableList<String> users =
-            FXCollections.observableArrayList();
+    /** Observable list of current online users. */
+    public final ObservableList<String> users = FXCollections.observableArrayList();
 
-    private final StringProperty selfUsername = new SimpleStringProperty();
+    /** Observable list of chat lines shown in the UI. */
+    public final ObservableList<ChatLine> lines = FXCollections.observableArrayList();
+
+    private final StringProperty selfUsername = new SimpleStringProperty("");
 
     /**
-     * Replaces the current list of users with a new list.
+     * Replaces the list of users in the model.
      *
-     * @param newUsers the new list of usernames to display; {@code null} is treated as empty
+     * @param newUsers users to display
      */
     public void setUsers(List<String> newUsers) {
-        users.clear();
-        if (newUsers != null) {
-            users.addAll(newUsers);
-        }
+        users.setAll(newUsers);
     }
 
     /**
-     * Adds the given username to the list if it is not already present.
+     * Adds a chat line to the model (view will render it).
      *
-     * @param username the username to add; ignored if {@code null} or blank
+     * @param line chat line
      */
-    public void addUser(String username) {
-        if (username == null || username.isBlank()) {
-            return;
-        }
-        if (!users.contains(username)) {
-            users.add(username);
+    public void addChatLine(ChatLine line) {
+        if (line != null) {
+            lines.add(line);
         }
     }
 
     /**
-     * Removes the given username from the list of users.
-     *
-     * @param username the username to remove; ignored if {@code null}
+     * Clears all chat lines.
      */
-    public void removeUser(String username) {
-        if (username == null) {
-            return;
-        }
-        users.remove(username);
+    public void clearLines() {
+        lines.clear();
     }
 
     /**
-     * Sets the username of the current client.
+     * Sets the local client's username (used for styling "self" messages).
      *
-     * @param username the local client's username
+     * @param username local username
      */
     public void setSelfUsername(String username) {
-        selfUsername.set(username);
+        selfUsername.set(username != null ? username : "");
     }
 
     /**
-     * Returns the username of the current client.
+     * Returns the local client's username.
      *
-     * @return the local client's username, or {@code null}
+     * @return username
      */
     public String getSelfUsername() {
         return selfUsername.get();

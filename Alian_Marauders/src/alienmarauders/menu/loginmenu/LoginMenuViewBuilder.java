@@ -14,6 +14,9 @@ import javafx.scene.layout.VBox;
 
 /**
  * Builds the login menu UI where the user can enter username, host and port.
+ * <p>
+ * The view exposes only value getters and event hooks (no control getters) to avoid
+ * tight controller-view coupling.
  */
 public class LoginMenuViewBuilder {
 
@@ -26,21 +29,84 @@ public class LoginMenuViewBuilder {
     private final Button connectButton = new Button("Connect");
     private final Button cancelButton = new Button("Main menu");
 
+    private Runnable onConnect;
+    private Runnable onCancel;
+
+    private boolean built = false;
+
+    /**
+     * Creates a new login menu view builder.
+     *
+     * @param switchModel global switch model (used for background binding)
+     */
     public LoginMenuViewBuilder(SwitchModel switchModel) {
         this.switchModel = switchModel;
     }
 
     /**
-     * Builds and returns the root region of the login menu.
+     * Sets the callback invoked when the user presses "Connect".
+     *
+     * @param action the action to run
+     */
+    public void setOnConnect(Runnable action) {
+        this.onConnect = action;
+    }
+
+    /**
+     * Sets the callback invoked when the user presses "Main menu".
+     *
+     * @param action the action to run
+     */
+    public void setOnCancel(Runnable action) {
+        this.onCancel = action;
+    }
+
+    /**
+     * Returns the username input value.
+     *
+     * @return the username string (may be empty)
+     */
+    public String getUsername() {
+        return usernameField.getText();
+    }
+
+    /**
+     * Returns the host input value.
+     *
+     * @return the host string (may be empty)
+     */
+    public String getHost() {
+        return hostField.getText();
+    }
+
+    /**
+     * Returns the port input value as text.
+     *
+     * @return the port string (may be empty)
+     */
+    public String getPortText() {
+        return portField.getText();
+    }
+
+    /**
+     * Builds (once) and returns the root region of the login menu.
      *
      * @return the root {@link Region} containing the login UI
      */
     public Region build() {
+        if (built) {
+            return root;
+        }
+        built = true;
+
         Label title = new Label("Chat Login");
 
         usernameField.setPromptText("Username");
         hostField.setPromptText("Server address (e.g. localhost)");
         portField.setPromptText("Port (e.g. 8888)");
+
+        connectButton.setOnAction(e -> runIfSet(onConnect));
+        cancelButton.setOnAction(e -> runIfSet(onCancel));
 
         VBox centerBox = new VBox(8, usernameField, hostField, portField);
         centerBox.setAlignment(Pos.CENTER);
@@ -54,6 +120,7 @@ public class LoginMenuViewBuilder {
         mainBox.setAlignment(Pos.CENTER);
 
         root.setCenter(mainBox);
+        root.setPickOnBounds(false);
 
         root.styleProperty().bind(Styles.backgroundStyle(switchModel.backgroundName, this));
 
@@ -61,47 +128,13 @@ public class LoginMenuViewBuilder {
     }
 
     /**
-     * Returns the text field used for username input.
+     * Runs the given action if it is non-null.
      *
-     * @return the username {@link TextField}
+     * @param action the runnable to execute
      */
-    public TextField getUsernameField() {
-        return usernameField;
-    }
-
-    /**
-     * Returns the text field used for host input.
-     *
-     * @return the host {@link TextField}
-     */
-    public TextField getHostField() {
-        return hostField;
-    }
-
-    /**
-     * Returns the text field used for port input.
-     *
-     * @return the port {@link TextField}
-     */
-    public TextField getPortField() {
-        return portField;
-    }
-
-    /**
-     * Returns the button used to trigger a connection attempt.
-     *
-     * @return the connect {@link Button}
-     */
-    public Button getConnectButton() {
-        return connectButton;
-    }
-
-    /**
-     * Returns the button used to cancel login and go back to the main menu.
-     *
-     * @return the cancel {@link Button}
-     */
-    public Button getCancelButton() {
-        return cancelButton;
+    private void runIfSet(Runnable action) {
+        if (action != null) {
+            action.run();
+        }
     }
 }

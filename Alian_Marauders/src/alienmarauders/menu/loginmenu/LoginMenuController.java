@@ -4,63 +4,74 @@ import alienmarauders.SwitchModel;
 import alienmarauders.menu.chatmenu.ChatMenuController;
 import alienmarauders.networking.ChatClient;
 import alienmarauders.networking.Message;
-import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.Region;
+
+import java.io.IOException;
 
 /**
  * Controller responsible for handling login events from the login menu UI.
  * <p>
- * It creates a {@link ChatClient}, listens for the login result, and on
- * success hands the client off to {@link ChatMenuController}.
+ * The controller does not access JavaFX controls directly. It uses value getters and event hooks
+ * exposed by {@link LoginMenuViewBuilder}.
  */
 public class LoginMenuController {
 
     private final SwitchModel switchModel;
+    private final LoginMenuViewBuilder viewBuilder;
+    private final Region root;
     private final ChatMenuController chatMenuController;
-    private final LoginMenuViewBuilder view;
+
+    private final Runnable goMainMenu;
 
     /**
-     * Creates a new controller for the login menu.
+     * Creates a new login menu controller (matches existing SwitchController wiring).
      *
-     * @param switchModel        the global switch model used for menu navigation
-     * @param chatMenuController the controller for the chat menu
+     * @param switchModel        global switch model
+     * @param chatMenuController controller used for the chat menu (to attach the client)
+     */
+    public LoginMenuController(SwitchModel switchModel, ChatMenuController chatMenuController) {
+        this(switchModel, chatMenuController, () -> {});
+    }
+
+    /**
+     * Creates a new login menu controller.
+     *
+     * @param switchModel        global switch model
+     * @param chatMenuController controller used for the chat menu (to attach the client)
+     * @param goMainMenu         optional callback after switching state back to main menu
      */
     public LoginMenuController(SwitchModel switchModel,
-                               ChatMenuController chatMenuController) {
+                               ChatMenuController chatMenuController,
+                               Runnable goMainMenu) {
         this.switchModel = switchModel;
         this.chatMenuController = chatMenuController;
-        this.view = new LoginMenuViewBuilder(switchModel);
-        hookEvents();
+        this.goMainMenu = (goMainMenu != null) ? goMainMenu : () -> {};
+
+        this.viewBuilder = new LoginMenuViewBuilder(switchModel);
+        this.viewBuilder.setOnConnect(this::handleConnect);
+        this.viewBuilder.setOnCancel(this::goBackToMainMenu);
+
+        this.root = viewBuilder.build(); // build once (no UI rebuild surprises)
     }
 
     /**
-     * Returns the UI view associated with this controller.
+     * Returns the UI view for this controller.
      *
-     * @return a {@link Region} representing the login screen
+     * @return the cached login menu root view
      */
     public Region getView() {
-        return view.build();
+        return root;
     }
 
     /**
-     * Wires the UI controls to their corresponding event handlers.
-     */
-    private void hookEvents() {
-        view.getConnectButton().setOnAction(e -> handleConnect());
-        view.getCancelButton().setOnAction(e -> goBackToMainMenu());
-    }
-
-    /**
-     * Attempts to connect to the chat server using the values from the text fields.
-     * <p>
-     * The actual login result is reported asynchronously via the
-     * {@link LoginListener} inner class.
+     * Reads user input via view value getters and attempts to connect/login to the chat server.
+     * Behavior is identical to the previous version.
      */
     private void handleConnect() {
-        String username = view.getUsernameField().getText().trim();
-        String host = view.getHostField().getText().trim();
-        String portText = view.getPortField().getText().trim();
+        String username = safeTrim(viewBuilder.getUsername());
+        String host = safeTrim(viewBuilder.getHost());
+        String portText = safeTrim(viewBuilder.getPortText());
 
         if (username.isBlank() || host.isBlank() || portText.isBlank()) {
             showError("All fields must be filled in.");
@@ -75,46 +86,65 @@ public class LoginMenuController {
             return;
         }
 
-        new Thread(() -> {
-            try {
-                ChatClient client = new ChatClient(host, port, username, null);
-                // Listen for login result first
-                LoginListener loginListener = new LoginListener(client);
-                client.setListener(loginListener);
-                client.connect();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                Platform.runLater(
-                        () -> showError("Login failed: " + ex.getMessage())
-                );
-            }
-        }, "Login-Connect-Thread").start();
+        ChatClient client = new ChatClient(host, port, username);
+
+        LoginPhaseListener loginListener = new LoginPhaseListener(
+                client,
+                message -> loginSuccessful(client, message),
+                message -> {
+                    String reason = (message != null) ? message.getText() : null;
+                    if (reason == null || reason.isBlank()) {
+                        reason = "Login rejected by server.";
+                    }
+                    showError(reason);
+                },
+                cause -> {
+                    String msg = (cause != null)
+                            ? "Disconnected: " + cause.getMessage()
+                            : "Disconnected from server.";
+                    showError(msg);
+                }
+        );
+
+        client.setListener(loginListener);
+
+        try {
+            client.connect();
+        } catch (IOException e) {
+            showError("Could not connect: " + e.getMessage());
+        }
     }
 
     /**
-     * Switches from the login menu to the main menu without connecting.
-     * <p>
-     * This is used when the user presses the "Cancel" button.
+     * Switches from login back to main menu and runs the optional callback.
      */
     private void goBackToMainMenu() {
         switchModel.loginMenuActive.set(false);
         switchModel.mainMenuActive.set(true);
+        goMainMenu.run();
     }
 
     /**
-     * Switches from the login menu to the chat menu.
+     * Called when login is successful (signaled by receiving the first USER_LIST).
      * <p>
-     * Called after a successful login handshake.
+     * Attaches the client to the chat menu and forwards the initial USER_LIST so the chat screen
+     * initializes immediately (identical to previous behavior).
+     *
+     * @param client          the connected client
+     * @param initialUserList the first USER_LIST message received during login
      */
-    private void switchToChatMenu() {
+    private void loginSuccessful(ChatClient client, Message initialUserList) {
+        // IMPORTANT: attach client AND forward the first USER_LIST to chat menu
+        chatMenuController.attachClient(client, initialUserList);
+
         switchModel.loginMenuActive.set(false);
         switchModel.chatMenuActive.set(true);
     }
 
     /**
-     * Shows an error message in an alert dialog.
+     * Shows an error dialog with a consistent title.
      *
-     * @param message the error text to display
+     * @param message the error message to show
      */
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -125,87 +155,12 @@ public class LoginMenuController {
     }
 
     /**
-     * Temporary listener used only during the login phase.
-     * <p>
-     * Once the server accepts the login (indicated by the first USER_LIST
-     * message), this listener hands the client to the {@link ChatMenuController}
-     * and switches the visible screen to the chat menu.
+     * Trims a string safely (null becomes empty string).
+     *
+     * @param s input string
+     * @return trimmed string or empty string if null
      */
-    private class LoginListener implements ChatClient.ChatListener {
-
-        private final ChatClient client;
-        private boolean loginCompleted = false;
-
-        /**
-         * Creates a new login listener for the given client.
-         *
-         * @param client the client whose login is being observed
-         */
-        LoginListener(ChatClient client) {
-            this.client = client;
-        }
-
-        @Override
-        public void onChatMessage(Message message) {
-            // Ignored during login phase
-        }
-
-        @Override
-        public void onUserList(Message message) {
-            // First USER_LIST means login was accepted
-            if (!loginCompleted) {
-                loginCompleted = true;
-
-                // Hand the client to the chat controller
-                chatMenuController.attachClient(client);
-
-                // Future messages should go directly to chat controller
-                client.setListener(chatMenuController);
-
-                // Forward this first user list to the chat controller
-                chatMenuController.onUserList(message);
-
-                switchToChatMenu();
-            } else {
-                // Should not really happen here, but forward just in case
-                chatMenuController.onUserList(message);
-            }
-        }
-
-        @Override
-        public void onUserJoined(Message message) {
-            // Normally we will not see this before onUserList,
-            // but if we do, forward to chat controller after loginCompleted.
-            if (loginCompleted) {
-                chatMenuController.onUserJoined(message);
-            }
-        }
-
-        @Override
-        public void onUserLeft(Message message) {
-            if (loginCompleted) {
-                chatMenuController.onUserLeft(message);
-            }
-        }
-
-        @Override
-        public void onLoginRejected(Message message) {
-            String reason = (message.getText() == null)
-                    ? "Login rejected by server."
-                    : message.getText();
-            showError(reason);
-            client.disconnect();
-        }
-
-        @Override
-        public void onConnectionClosed(Exception cause) {
-            if (!loginCompleted) {
-                showError("Connection closed before login completed"
-                        + (cause != null ? ": " + cause.getMessage() : "."));
-            } else {
-                // After login, the chat controller will receive future closes
-                chatMenuController.onConnectionClosed(cause);
-            }
-        }
+    private String safeTrim(String s) {
+        return (s == null) ? "" : s.trim();
     }
 }
